@@ -1,4 +1,4 @@
-import { Box, Button } from "@mui/material";
+import { Box, Button, Skeleton, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import Uploader from "./components/Uploader";
@@ -25,6 +25,8 @@ function App() {
   const [melodyFile, setMelodyFile] = useState<File>();
   const [showWaveSelector, setShowWaveSelector] = useState(false);
   const [newAudio, setAudio] = useState<string>();
+  const [wsMsg, setWsMsg] = useState<string>();
+  const [isConnectionLoading, setIsConnectionLoading] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -39,23 +41,18 @@ function App() {
 
   const onFetchAudio = async () => {
     if (wsRef.current && melodyFile) {
-      console.time("base64");
-      const base64 = await fileToBase64(melodyFile);
-      // const ab = await new Promise((res) => {
-      //   const fr = new FileReader();
-      //   fr.onload = (e) => {
-      //     res(e.target?.result);
-      //   };
-      //   fr.readAsArrayBuffer(melodyFile);
-      // });
-
-      console.timeEnd("base64");
+      // const arrayBuffer = await fileToArraybuffer(melodyFile);
+      const base64_audio = await fileToBase64(melodyFile);
       const obj = {
         msg: "generate",
-        descriptions: genreNames,
-        melody: base64,
-        durations: Array(10).fill(1),
+        melody: base64_audio,
+        descriptions: genreNames.slice(0, 1),
+        durations: Array(1).fill(1),
       };
+      // Create a Blob with the binary data and additional metadata
+      // const blob = new Blob([arrayBuffer, JSON.stringify(obj)], {
+      //   type: "application/octet-stream",
+      // });
       wsRef.current.send(JSON.stringify(obj));
     }
   };
@@ -65,14 +62,21 @@ function App() {
   };
   const setupWs = async () => {
     if (wsRef.current) return;
-    const ws = new WebSocket("ws://35.239.6.232:8000/ws");
-    ws.onopen = () => ws.send(JSON.stringify({ msg: "Connected" }));
+    // const ws = new WebSocket("ws://localhost:8000/ws");
+    const ws = new WebSocket("wss://websocket.nusic.fm/ws");
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ msg: "Connected" }));
+      setIsConnectionLoading(true);
+    };
     ws.onmessage = (e) => {
       const data = e.data;
       if (data instanceof Blob) {
         const blob = new Blob([data], { type: "audio/wav" });
         setAudio(URL.createObjectURL(blob));
         // playAudio(URL.createObjectURL(blob));
+      } else {
+        setWsMsg(data);
+        setIsConnectionLoading(false);
       }
     };
     wsRef.current = ws;
@@ -88,7 +92,26 @@ function App() {
   }, []);
 
   return (
-    <Box height={"90vh"} width={{ xs: "100vw", md: "unset" }}>
+    <Box
+      height={"90vh"}
+      width={{ xs: "100vw", md: "unset" }}
+      position="relative"
+    >
+      {!!wsMsg && (
+        <Typography
+          sx={{ position: "absolute", top: 0, right: 10 }}
+          color={"lightgreen"}
+        >
+          {wsMsg}
+        </Typography>
+      )}
+      {isConnectionLoading && (
+        <Skeleton
+          sx={{ position: "absolute", top: 0, right: 10 }}
+          width={100}
+          variant="rounded"
+        ></Skeleton>
+      )}
       <motion.div
         animate={{ y: melodyFile ? "10%" : "40vh" }}
         transition={{ type: "spring", duration: 1 }}

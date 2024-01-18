@@ -16,3 +16,9 @@
   align-items: center;
   justify-content: center;
 }
+div::part(region-handle) {
+  border-color: #fff;
+}
+/* div::part(region) {
+  transition: all 0.8s ease-in-out;
+} */
