@@ -62,47 +62,49 @@ const WaveSelector = () => {
         barGap={5}
         barRadius={5}
       />
-      <Box
-        display={"flex"}
-        gap={4}
-        mt={4}
-        justifyContent="center"
-        position={"relative"}
-      >
+      {wavesurfer && (
         <Box
-          position={"absolute"}
-          left={0}
-          width={"100%"}
-          height="100%"
           display={"flex"}
-          alignItems="center"
-          gap={2}
+          gap={4}
+          mt={4}
+          justifyContent="center"
+          position={"relative"}
         >
-          <IconButton onClick={() => wavesurfer?.playPause()}>
-            {isPlaying ? <PauseRounded /> : <PlayArrowRounded />}
-          </IconButton>
-          <Typography>
-            {convertSecondsToHHMMSS(Math.floor(currentTime))}
-          </Typography>
+          <Box
+            position={"absolute"}
+            left={0}
+            width={"100%"}
+            height="100%"
+            display={"flex"}
+            alignItems="center"
+            gap={2}
+          >
+            <IconButton onClick={() => wavesurfer?.playPause()}>
+              {isPlaying ? <PauseRounded /> : <PlayArrowRounded />}
+            </IconButton>
+            <Typography>
+              {convertSecondsToHHMMSS(Math.floor(currentTime))}
+            </Typography>
+          </Box>
+          {[
+            { start: 0, end: 6 },
+            { start: 6, end: 12 },
+            { start: 12, end: 16 },
+          ].map((seg) => (
+            <Chip
+              key={seg.start}
+              clickable
+              label={`${seg.start}-${seg.end}s`}
+              color="secondary"
+              onClick={() => {
+                regionsWs.current
+                  ?.getRegions()[0]
+                  .setOptions({ start: seg.start, end: seg.end });
+              }}
+            />
+          ))}
         </Box>
-        {[
-          { start: 0, end: 6 },
-          { start: 6, end: 12 },
-          { start: 12, end: 16 },
-        ].map((seg) => (
-          <Chip
-            key={seg.start}
-            clickable
-            label={`${seg.start}-${seg.end}s`}
-            color="secondary"
-            onClick={() => {
-              regionsWs.current
-                ?.getRegions()[0]
-                .setOptions({ start: seg.start, end: seg.end });
-            }}
-          />
-        ))}
-      </Box>
+      )}
     </Stack>
   );
 };

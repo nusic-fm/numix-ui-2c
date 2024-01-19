@@ -1,5 +1,5 @@
 import { Button, Skeleton, Box } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import BubbleUI from "react-bubble-ui";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import PauseIcon from "@mui/icons-material/Pause";
@@ -51,9 +51,9 @@ const DropsFace = ({
   newAudio,
   playAudio,
 }: Props) => {
-  const [prevLoadingNo, setPrevLoadingNo] = useState(-1);
-  const [playPosition, setPlayPosition] = useState<number>(-1);
-  const [newAudioNo, setNewAudioNo] = useState<number>(-1);
+  // const [prevLoadingNo, setPrevLoadingNo] = useState(-1);
+  const [playUrl, setPlayUrl] = useState<string>();
+  // const [newAudioNo, setNewAudioNo] = useState<number>(-1);
   const [positionArr] = useState<number[]>([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   const [reorderArr] = useState<number[]>(() =>
     [...positionArr].sort(() => Math.random() - 0.5)
@@ -61,7 +61,6 @@ const DropsFace = ({
   const [audioListObj, setAudioListObj] = useState<{
     [key: string]: SnippetProp;
   }>({});
-  const audioListObjRef = useRef<object>({});
 
   // useEffect(() => {
   //   const renderOrder = [...reorderArr];
@@ -96,32 +95,28 @@ const DropsFace = ({
   // }, []);
 
   useEffect(() => {
+    if (playUrl) {
+      playAudio(testUrls(1), true);
+    }
+  }, [playUrl]);
+
+  useEffect(() => {
     if (newAudio) {
-      console.log("triggered");
       setAudioListObj((preAudioListObj) => {
         const currentIdx = Object.keys(preAudioListObj).length;
         const name = genreNames[currentIdx];
-        if (!currentIdx) {
-          return {
-            [reorderArr[0].toString()]: {
-              name,
-              color: getColorsForGroup(name),
-              duration: 1,
-              url: newAudio,
-            },
-          };
-        } else
-          return {
-            ...preAudioListObj,
-            [reorderArr[currentIdx].toString()]: {
-              name,
-              color: getColorsForGroup(name),
-              duration: 1,
-              url: newAudio,
-            },
-          };
+        return {
+          ...preAudioListObj,
+          [reorderArr[currentIdx].toString()]: {
+            name,
+            color: getColorsForGroup(name),
+            duration: 1,
+            url: newAudio,
+          },
+        };
       });
-      playAudio(newAudio, true);
+      // playAudio(newAudio, true);
+      setPlayUrl(newAudio);
     }
   }, [newAudio]);
   console.log(audioListObj);
@@ -146,6 +141,7 @@ const DropsFace = ({
     >
       {positionArr.map((pos) => {
         const snippet = audioListObj[pos];
+        const isSnippetPlaying = playUrl === snippet?.url;
         // if (snippet) {
         return (
           <Box
@@ -154,21 +150,22 @@ const DropsFace = ({
             height={snippet ? "140px" : "24px"}
             width={snippet ? "140px" : "24px"}
             style={{
-              backgroundColor: snippet?.color ?? "unset",
-              transition: "0.2s ease",
+              backgroundColor: isSnippetPlaying
+                ? "transparent"
+                : snippet?.color,
+              outline: snippet?.color ? `4px solid ${snippet.color}` : "unset",
+              transition: "0.3s ease",
             }}
           >
-            {snippet && playPosition === pos && (
+            {snippet && playUrl === snippet.url && (
               <Box
                 position={"absolute"}
                 height="100%"
                 width={"100%"}
                 borderRadius="50%"
                 sx={{
-                  animation: "waves 2s linear infinite",
-                  animationDelay: "1s",
-                  background: snippet.color,
-                  transition: "5s ease",
+                  border: `4px solid ${snippet.color}`,
+                  filter: "blur(7px)",
                 }}
               ></Box>
             )}
@@ -181,14 +178,14 @@ const DropsFace = ({
                   borderRadius: "50%",
                 }}
                 onClick={() => {
-                  if (playPosition === pos) {
+                  if (isSnippetPlaying) {
                     stopPlayer();
                     playPlayer();
-                  } else setPlayPosition(pos);
+                  } else setPlayUrl(snippet.url);
                 }}
               >
                 {snippet.name}
-                {isTonePlaying && playPosition === pos ? (
+                {isTonePlaying && isSnippetPlaying ? (
                   <PauseIcon />
                 ) : (
                   <PlayArrowRoundedIcon />

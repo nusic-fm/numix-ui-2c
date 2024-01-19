@@ -22,3 +22,14 @@ div::part(region-handle) {
 /* div::part(region) {
   transition: all 0.8s ease-in-out;
 } */
+/* @keyframes waves {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+} */

@@ -46,8 +46,8 @@ function App() {
       const obj = {
         msg: "generate",
         melody: base64_audio,
-        descriptions: genreNames.slice(0, 1),
-        durations: Array(1).fill(1),
+        descriptions: genreNames,
+        durations: Array(10).fill(1),
       };
       // Create a Blob with the binary data and additional metadata
       // const blob = new Blob([arrayBuffer, JSON.stringify(obj)], {
@@ -83,6 +83,11 @@ function App() {
   };
   useEffect(() => {
     if (melodyFile) {
+      // new Array(10)
+      //   .fill(1)
+      //   .map((a, i) =>
+      //     setTimeout(() => setAudio(Math.random().toString()), i * 4000)
+      //   );
       onFetchAudio();
     }
   }, [melodyFile]);
@@ -106,11 +111,12 @@ function App() {
         </Typography>
       )}
       {isConnectionLoading && (
-        <Skeleton
+        <Typography
           sx={{ position: "absolute", top: 0, right: 10 }}
-          width={100}
-          variant="rounded"
-        ></Skeleton>
+          color={"red"}
+        >
+          Connecting
+        </Typography>
       )}
       <motion.div
         animate={{ y: melodyFile ? "10%" : "40vh" }}
