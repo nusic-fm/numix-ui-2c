@@ -23,6 +23,7 @@ const genreNames = [
 
 function App() {
   const [melodyFile, setMelodyFile] = useState<File>();
+  const [melodyUrl, setMelodyUrl] = useState<string>();
   const [showWaveSelector, setShowWaveSelector] = useState(false);
   const [newAudio, setAudio] = useState<string>();
   const [wsMsg, setWsMsg] = useState<string>();
@@ -35,7 +36,9 @@ function App() {
 
   const onDropMusicUpload = (acceptedFiles: File[]) => {
     if (acceptedFiles.length) {
-      setMelodyFile(acceptedFiles[0]);
+      const melody = acceptedFiles[0];
+      setMelodyFile(melody);
+      setMelodyUrl(URL.createObjectURL(melody));
     }
   };
 
@@ -62,8 +65,7 @@ function App() {
   };
   const setupWs = async () => {
     if (wsRef.current) return;
-    // const ws = new WebSocket("ws://localhost:8000/ws");
-    const ws = new WebSocket("wss://websocket.nusic.fm/ws");
+    const ws = new WebSocket(import.meta.env.VITE_WEBSOCKET_URL);
     ws.onopen = () => {
       ws.send(JSON.stringify({ msg: "Connected" }));
       setIsConnectionLoading(true);
@@ -150,9 +152,9 @@ function App() {
             </Box>
           </Box>
         )}
-        {showWaveSelector && (
+        {showWaveSelector && melodyUrl && (
           <Box mt={4} width="100%" display={"flex"} justifyContent="center">
-            <WaveSelector />
+            <WaveSelector url={melodyUrl} />
           </Box>
         )}
       </motion.div>

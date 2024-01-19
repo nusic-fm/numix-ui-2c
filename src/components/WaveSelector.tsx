@@ -9,7 +9,7 @@ import Regions from "wavesurfer.js/dist/plugins/regions.js";
 import Timeline from "wavesurfer.js/dist/plugins/timeline.js";
 import { convertSecondsToHHMMSS } from "../helpers/audio";
 
-const url =
+const fullUrl =
   "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/audio.wav?alt=media";
 // const timelineOptions = useRef({
 //   height: 15,
@@ -20,8 +20,10 @@ const url =
 //     color: "#fff",
 //   },
 // });
-
-const WaveSelector = () => {
+type Props = {
+  url: string;
+};
+const WaveSelector = ({ url }: Props) => {
   const [wavesurfer, setWavesurfer] = useState<WaveSurfer | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -52,7 +54,7 @@ const WaveSelector = () => {
         cursorWidth={3}
         // progressColor=""
         waveColor="#573FC8"
-        url={url}
+        url={fullUrl}
         onReady={onReady}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}

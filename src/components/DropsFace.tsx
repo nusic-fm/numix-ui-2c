@@ -96,7 +96,7 @@ const DropsFace = ({
 
   useEffect(() => {
     if (playUrl) {
-      playAudio(testUrls(1), true);
+      playAudio(playUrl, true);
     }
   }, [playUrl]);
 
