@@ -5,27 +5,24 @@ import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import PauseIcon from "@mui/icons-material/Pause";
 import "react-bubble-ui/dist/index.css";
 
-const getColorsForGroup = (name: string) => {
-  switch (name) {
-    case "House":
-    case "Ambient":
-    case "Pluggnb":
+const getColorsForGroup = (idx: number) => {
+  switch (idx) {
+    case 5:
+    case 2:
+    case 8:
       return "rgb(33, 206, 175)";
-    case "The Raver":
-    case "Mystical":
-    case "The Chase":
+    case 9:
+    case 1:
+    case 7:
       return "rgb(58, 106, 231)";
-    case "The Rocker":
-    case "Future Bass":
-    case "Indian":
-    case "African":
+    case 3:
+    case 6:
+    case 10:
       return "rgb(255, 130, 14)";
     default:
       return "rgb(208, 43, 250)";
   }
 };
-const testUrls = (idx: number) =>
-  `https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/shorts%2F${idx}.wav?alt=media`;
 
 type SnippetProp = {
   url: string;
@@ -40,7 +37,8 @@ type Props = {
   playPlayer: () => void;
   genreNames: string[];
   newAudio?: string;
-  playAudio: any;
+  playAudio: (url: string, start: boolean) => void;
+  onGenreSelection: (description: string) => void;
 };
 
 const DropsFace = ({
@@ -50,6 +48,7 @@ const DropsFace = ({
   genreNames,
   newAudio,
   playAudio,
+  onGenreSelection,
 }: Props) => {
   // const [prevLoadingNo, setPrevLoadingNo] = useState(-1);
   const [playUrl, setPlayUrl] = useState<string>();
@@ -96,6 +95,10 @@ const DropsFace = ({
 
   useEffect(() => {
     if (playUrl) {
+      const key = Object.keys(audioListObj).find(
+        (k) => audioListObj[k].url === playUrl
+      );
+      onGenreSelection(audioListObj[key ?? 0].name);
       playAudio(playUrl, true);
     }
   }, [playUrl]);
@@ -104,12 +107,13 @@ const DropsFace = ({
     if (newAudio) {
       setAudioListObj((preAudioListObj) => {
         const currentIdx = Object.keys(preAudioListObj).length;
-        const name = genreNames[currentIdx];
+        const idx = reorderArr[currentIdx] - 1;
+        const name = genreNames[idx];
         return {
           ...preAudioListObj,
           [reorderArr[currentIdx].toString()]: {
             name,
-            color: getColorsForGroup(name),
+            color: getColorsForGroup(idx),
             duration: 1,
             url: newAudio,
           },
@@ -119,7 +123,6 @@ const DropsFace = ({
       setPlayUrl(newAudio);
     }
   }, [newAudio]);
-  console.log(audioListObj);
 
   return (
     <BubbleUI
@@ -142,22 +145,29 @@ const DropsFace = ({
       {positionArr.map((pos) => {
         const snippet = audioListObj[pos];
         const isSnippetPlaying = playUrl === snippet?.url;
+        const isNext = reorderArr[Object.keys(audioListObj).length] === pos;
         // if (snippet) {
         return (
           <Box
-            className="childComponent"
+            className={"childComponent"}
             key={pos}
-            height={snippet ? "140px" : "24px"}
-            width={snippet ? "140px" : "24px"}
+            height={snippet ? "140px" : isNext ? "120px" : "24px"}
+            width={snippet ? "140px" : isNext ? "120px" : "24px"}
             style={{
-              backgroundColor: isSnippetPlaying
-                ? "transparent"
-                : snippet?.color,
-              outline: snippet?.color ? `4px solid ${snippet.color}` : "unset",
-              transition: "0.3s ease",
+              backgroundColor: snippet?.color,
+              // outline: snippet?.color ? `4px solid ${snippet.color}` : "unset",
+              transition: "all 0.4s",
             }}
           >
-            {snippet && playUrl === snippet.url && (
+            {isNext && (
+              <Skeleton
+                variant="circular"
+                width={"24px"}
+                height={"24px"}
+                animation="wave"
+              />
+            )}
+            {/* {snippet && playUrl === snippet.url && (
               <Box
                 position={"absolute"}
                 height="100%"
@@ -168,8 +178,41 @@ const DropsFace = ({
                   filter: "blur(7px)",
                 }}
               ></Box>
-            )}
-            {snippet ? (
+            )} */}
+            {/* {isNext ? (
+              // <Box
+              //   // position={"absolute"}
+              //   height="100%"
+              //   width={"100%"}
+              //   borderRadius="50%"
+              //   sx={{
+              //     border: `4px solid ${getColorsForGroup(genreNames[pos])}`,
+              //     filter: "blur(7px)",
+              //   }}
+              // ></Box>
+              <motion.div
+                initial={{ opacity: 0.5, scale: 0.2 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 4 }}
+                className="loader-css"
+                style={{
+                  borderColor: getColorsForGroup(
+                    genreNames[Object.keys(audioListObj).length]
+                  ),
+                }}
+              ></motion.div>
+            ) : (
+              !snippet && (
+                // <Skeleton
+                //   variant="circular"
+                //   width={"100%"}
+                //   height={"100%"}
+                //   animation="wave"
+                // />
+                <></>
+              )
+            )} */}
+            {snippet && (
               <Button
                 color="secondary"
                 sx={{
@@ -191,13 +234,6 @@ const DropsFace = ({
                   <PlayArrowRoundedIcon />
                 )}
               </Button>
-            ) : (
-              <Skeleton
-                variant="circular"
-                width={"100%"}
-                height={"100%"}
-                animation="wave"
-              />
             )}
           </Box>
         );

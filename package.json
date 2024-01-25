@@ -26,7 +26,9 @@
     "react-bubble-ui": "^1.1.2",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.2.3",
+    "react-use-websocket": "^4.5.0",
     "tone": "^14.7.77",
+    "wavesurfer-multitrack": "^0.4.11",
     "wavesurfer.js": "^7.6.4",
     "webfontloader": "^1.6.28"
   },

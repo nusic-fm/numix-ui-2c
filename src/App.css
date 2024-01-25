@@ -33,3 +33,45 @@ div::part(region-handle) {
     opacity: 0;
   }
 } */
+.loading-bubble {
+  animation: zoomEffect 2s linear 0s infinite;
+}
+
+@keyframes zoomEffect {
+  0% {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  50% {
+    width: 140px !important;
+    height: 140px !important;
+  }
+
+  100% {
+    width: 24px !important;
+    height: 24px !important;
+  }
+}
+
+.loader-css div {
+  height: 100%;
+  width: 100%;
+  border-radius: 100%;
+  box-sizing: border-box;
+  border-bottom: 0.2em solid transparent;
+  border-top: 0.2em solid transparent;
+  border-left: 0.2em solid;
+  border-right: 0.2em solid;
+  border-left-color: inherit;
+  border-right-color: inherit;
+  animation: spin 4s infinite linear;
+}
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(180deg);
+  }
+}
