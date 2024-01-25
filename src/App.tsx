@@ -162,7 +162,7 @@ function App() {
           const blob = new Blob([data], { type: "audio/wav" });
           setLongerRemixUrl(URL.createObjectURL(blob));
           setLongerAudioLoading(false);
-        } else if (allin1Analysis && !vocalsUrl) {
+        } else if (longerRemixUrl && !vocalsUrl) {
           const blob = new Blob([data], { type: "audio/wav" });
           setVocalsUrl(URL.createObjectURL(blob));
         } else {
