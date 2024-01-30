@@ -52,12 +52,18 @@ const WaveSelector = ({ url, analysis, onSliceSelection }: Props) => {
       start: 0,
       end: 6,
       color: "rgba(0, 0, 0, 0.5)",
-      maxLength: 14,
-      minLength: 4,
+      maxLength: 30,
     });
     if (analysis && onSliceSelection) {
+      regionsWs.current
+        .getRegions()[0]
+        .setOptions({ start: analysis.beats[0], end: analysis.beats[15] });
       regionsWs.current.on("region-updated", (reg) => {
-        const newStart = getClosesNoInArr(analysis.beats, reg.start);
+        console.log(reg.start);
+        const newStart =
+          reg.start < analysis.beats[0] / 2
+            ? 0
+            : getClosesNoInArr(analysis.beats, reg.start);
         const newEnd = getClosesNoInArr(analysis.beats, reg.end);
         reg.setOptions({
           start: newStart,
@@ -67,10 +73,10 @@ const WaveSelector = ({ url, analysis, onSliceSelection }: Props) => {
       });
       onSliceSelection(0, 6);
       // set beats
-      analysis.beats.map((b, i) => {
+      analysis.beats.map((b) => {
         regionsWs.current.addRegion({
           start: b,
-          content: (i + 1).toString(),
+          // content: (i + 1).toString(),
           color: "rgba(255, 255, 255, 0.2)",
           resize: false,
           drag: false,

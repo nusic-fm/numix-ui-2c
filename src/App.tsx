@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material";
+import { Box, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import "./App.css";
 import Uploader from "./components/Uploader";
@@ -9,7 +9,8 @@ import WaveSelector from "./components/WaveSelector";
 import useWebSocket from "react-use-websocket";
 import { LoadingButton } from "@mui/lab";
 import MultiWaveform from "./components/MultiWaveform";
-import { fileToBase64 } from "./helpers/audio";
+import { fileToArraybuffer } from "./helpers/audio";
+import { getYouTubeVideoId } from "./helpers";
 
 const genreNames = [
   "Progressive House",
@@ -42,20 +43,24 @@ export type LongerSectionProps = {
 function App() {
   const [melodyFile, setMelodyFile] = useState<File>();
   const [melodyUrl, setMelodyUrl] = useState<string>();
+  // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/instrumental.wav?alt=media"
   const [vocalsUrl, setVocalsUrl] = useState<string>();
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/vocals.wav?alt=media"
   const [longerRemixUrl, setLongerRemixUrl] = useState<string>();
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/instrumental.wav?alt=media"
   const [showWaveSelector, setShowWaveSelector] = useState(false);
   const [newAudio, setNewAudio] = useState<string>();
-  const [longerAudioLoading, setLongerAudioLoading] = useState<boolean>();
+  const [longerAudioLoading, setLongerAudioLoading] = useState<boolean>(false);
   const [allin1Analysis, setAllIn1Analysis] = useState<Allin1Anaysis>();
   // JSON.parse(
   //   '{"msg":"allin1","segments":[{"start":0.0,"end":0.01,"label":"verse"},{"start":0.01,"end":15.99,"label":"verse"},{"start":15.99,"end":16.0,"label":"verse"}],"bpm":120,"beats":[0.49,1.0,1.49,2.0,2.49,2.99,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0,7.49,8.0,8.5,9.0,9.49,10.0,10.49,11.0,11.5,12.0,12.5,13.0,13.5,14.0,14.5,15.0,15.49],"downbeats":[0.49,2.49,4.5,6.5,8.5,10.49,12.5,14.5],"beat_positions":[1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3]}'
   // )
+
+  const [youtubeLink, setYoutubeLink] = useState<string>("");
+  const [vid, setVid] = useState<string>("");
   const [isReady, setIsReady] = useState(false);
   const {
-    // sendMessage,
+    sendMessage,
     sendJsonMessage,
     lastMessage,
     // lastJsonMessage,
@@ -66,18 +71,17 @@ function App() {
     onOpen: () => console.log("Connected"),
     onClose: () => console.log("Closed"),
     //Will attempt to reconnect on all close events, such as server shutting down
-    shouldReconnect: () => false,
+    shouldReconnect: () => true,
   });
-  const readyStateString = {
-    0: "CONNECTING",
-    1: "OPEN",
-    2: "CLOSING",
-    3: "CLOSED",
-  }[readyState as 0 | 1 | 2 | 3];
+  const readyStateString = ["CONNECTING", "OPEN", "CLOSING", "CLOSED"][
+    readyState
+  ];
 
   useEffect(() => {
     if (readyStateString === "OPEN" && isReady === false) {
       sendJsonMessage({ msg: "Connected to Client" });
+    } else if (readyStateString === "OPEN" && longerAudioLoading) {
+      sendJsonMessage({ msg: "get_long_music", vid });
     }
   }, [readyState]);
 
@@ -107,33 +111,42 @@ function App() {
     }
   };
 
-  const onFetchAudio = async () => {
+  // const onFetchAudio = async () => {
+  //   if (readyStateString === "OPEN" && melodyFile) {
+  //     // sendJsonMessage({
+  //     //   msg: "generate_long",
+  //     //   start: 0,
+  //     //   end: 0,
+  //     //   description: "Progressive House",
+  //     // });
+  //     // const arrayBuffer = await fileToArraybuffer(melodyFile);
+  //     // const base64_audio = await fileToBase64(melodyFile);
+  //     const bf_audio = await fileToArraybuffer(melodyFile);
+  //     sendMessage(bf_audio as ArrayBuffer);
+  //     // const obj = {
+  //     //   msg: "generate_short",
+  //     //   melody: base64_audio,
+  //     //   descriptions: genreNames.slice(0, 1),
+  //     //   durations: Array(1).fill(1),
+  //     // };
+  //     // sendJsonMessage(obj);
+  //     // Create a Blob with the binary data and additional metadata
+  //     // const blob = new Blob([arrayBuffer, JSON.stringify(obj)], {
+  //     //   type: "application/octet-stream",
+  //     // });
+  //     // wsRef.current.send(JSON.stringify(obj));
+  //   }
+  // };
+
+  const onDropFile = async () => {
     if (readyStateString === "OPEN" && melodyFile) {
-      // sendJsonMessage({
-      //   msg: "generate_long",
-      //   start: 0,
-      //   end: 0,
-      //   description: "Progressive House",
-      // });
-      // const arrayBuffer = await fileToArraybuffer(melodyFile);
-      const base64_audio = await fileToBase64(melodyFile);
-      const obj = {
-        msg: "generate",
-        melody: base64_audio,
-        descriptions: genreNames.slice(0, 1),
-        durations: Array(1).fill(1),
-      };
-      sendJsonMessage(obj);
-      // Create a Blob with the binary data and additional metadata
-      // const blob = new Blob([arrayBuffer, JSON.stringify(obj)], {
-      //   type: "application/octet-stream",
-      // });
-      // wsRef.current.send(JSON.stringify(obj));
+      const bf_audio = await fileToArraybuffer(melodyFile);
+      sendMessage(bf_audio as ArrayBuffer);
     }
   };
 
   const onGenerate = async () => {
-    if (showWaveSelector && melodyFile) {
+    if (showWaveSelector && vid) {
       // setVocalsUrl(
       //   "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/vocals.wav?alt=media"
       // );
@@ -154,6 +167,29 @@ function App() {
     }
   };
 
+  const onFetchShorts = () => {
+    const obj = {
+      msg: "generate_short",
+      descriptions: genreNames.slice(0, 1),
+      durations: Array(1).fill(1),
+      vid,
+    };
+    sendJsonMessage(obj);
+  };
+
+  useEffect(() => {
+    if (vid) {
+      onFetchShorts();
+    }
+  }, [vid]);
+
+  useEffect(() => {
+    const vid = getYouTubeVideoId(youtubeLink);
+    if (youtubeLink && readyStateString === "OPEN" && vid) {
+      sendJsonMessage({ msg: "ytp", url: youtubeLink, vid });
+    }
+  }, [youtubeLink]);
+
   useEffect(() => {
     if (lastMessage) {
       const data = lastMessage.data;
@@ -165,17 +201,23 @@ function App() {
         } else if (longerRemixUrl && !vocalsUrl) {
           const blob = new Blob([data], { type: "audio/wav" });
           setVocalsUrl(URL.createObjectURL(blob));
+        } else if (!melodyUrl) {
+          const blob = new Blob([data], { type: "audio/wav" });
+          setMelodyUrl(URL.createObjectURL(blob));
         } else {
           const blob = new Blob([data], { type: "audio/wav" });
           setNewAudio(URL.createObjectURL(blob));
         }
       } else {
-        console.log({ newAudio });
         const dataObj = JSON.parse(data);
         if (dataObj.msg === "allin1") {
           setAllIn1Analysis(dataObj);
-        } else if (dataObj.msg === "Connected") {
+        } else if (dataObj.msg === "connected") {
           setIsReady(true);
+        } else if (dataObj.msg === "saved" && dataObj.vid) {
+          setVid(dataObj.vid);
+        } else if (dataObj.msg === "status") {
+          sendJsonMessage({ msg: "get_long_music", vid });
         }
       }
     }
@@ -194,7 +236,7 @@ function App() {
       //       (i + 1) * 4000
       //     )
       //   );
-      onFetchAudio();
+      onDropFile();
     }
   }, [melodyFile]);
 
@@ -208,10 +250,26 @@ function App() {
         {readyStateString} - {isReady ? "Model Ready" : "Model Not Ready"}
       </Typography>
       <motion.div
-        animate={{ y: melodyFile ? "10%" : "40vh" }}
+        animate={{ y: vid ? "10%" : "40vh" }}
         transition={{ type: "spring", duration: 1 }}
       >
-        <Box width="100%" display={"flex"} justifyContent="center">
+        <Box
+          mt={4}
+          width="100%"
+          display={"flex"}
+          justifyContent="center"
+          gap={2}
+        >
+          <TextField
+            disabled={!!vid}
+            sx={{ width: "440px" }}
+            label="Youtube Link"
+            color="secondary"
+            value={youtubeLink}
+            onChange={(e) => setYoutubeLink(e.target.value)}
+          />
+        </Box>
+        <Box mt={4} width="100%" display={"flex"} justifyContent="center">
           <Uploader
             onDrop={onDropMusicUpload}
             melodyFile={melodyFile}
@@ -219,7 +277,7 @@ function App() {
             playAudio={playAudio}
           />
         </Box>
-        {melodyFile && !showWaveSelector && (
+        {vid && !showWaveSelector && (
           <Box mt={4} width="100%">
             <Box mt={4} width="100%" display={"flex"} justifyContent="center">
               <DropsFace
@@ -253,7 +311,7 @@ function App() {
             />
           </Box>
         )}
-        {newAudio && !longerRemixUrl && (
+        {newAudio && !longerRemixUrl && allin1Analysis && (
           <Box mt={4} display={"flex"} justifyContent="center">
             <LoadingButton
               loading={longerAudioLoading}
