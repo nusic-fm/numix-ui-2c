@@ -72,6 +72,7 @@ function App() {
     onClose: () => console.log("Closed"),
     //Will attempt to reconnect on all close events, such as server shutting down
     shouldReconnect: () => true,
+    reconnectAttempts: 5,
   });
   const readyStateString = ["CONNECTING", "OPEN", "CLOSING", "CLOSED"][
     readyState
@@ -168,10 +169,16 @@ function App() {
   };
 
   const onFetchShorts = () => {
+    // sendJsonMessage({
+    //   msg: "generate_long",
+    //   start: 0,
+    //   end: 16,
+    //   description: "Progressive House",
+    // });
     const obj = {
       msg: "generate_short",
-      descriptions: genreNames.slice(0, 1),
-      durations: Array(1).fill(1),
+      descriptions: genreNames,
+      durations: Array(10).fill(1),
       vid,
     };
     sendJsonMessage(obj);

@@ -52,7 +52,6 @@ const WaveSelector = ({ url, analysis, onSliceSelection }: Props) => {
       start: 0,
       end: 6,
       color: "rgba(0, 0, 0, 0.5)",
-      maxLength: 30,
     });
     if (analysis && onSliceSelection) {
       regionsWs.current

@@ -9,14 +9,15 @@ import {
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
-import PauseRoundedIcon from "@mui/icons-material/PauseRounded";
 import * as Tone from "tone";
+import DownloadRounded from "@mui/icons-material/DownloadRounded";
+import StopRounded from "@mui/icons-material/StopRounded";
 // type Props = {}
 
-const MultiWaveform = ({ vocalsUrl, remixUrl, bpm }: any) => {
+const MultiWaveform = ({ vocalsUrl, remixUrl }: any) => {
   //   const containerRef = useRef(null);
   const [, setIsLoading] = useState(true);
-  const [isPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const instrumentPlayer = useRef<Tone.Player | null>(null);
   const instrumentPitchShiftRef = useRef<Tone.PitchShift>(
@@ -57,20 +58,21 @@ const MultiWaveform = ({ vocalsUrl, remixUrl, bpm }: any) => {
       vocalsPitchShiftRef.current.connect(delayRef.current);
       vocalsPitchShiftRef.current.connect(reverbRef.current);
 
-      Tone.Transport.bpm.value = bpm ?? 83;
-      Tone.Transport.cancel(0);
+      // Tone.Transport.bpm.value = bpm ?? 83;
+      // Tone.Transport.cancel(0);
       setIsLoading(false);
     }
   }, [vocalsUrl, remixUrl]);
 
   const toggleTransport = () => {
-    if (Tone.Transport.state !== "started") {
-      instrumentPlayer.current?.start(0);
-      vocalsPlayer.current?.start(0);
-    } else {
+    if (isPlaying) {
       instrumentPlayer.current?.stop(0);
       vocalsPlayer.current?.stop(0);
+    } else {
+      instrumentPlayer.current?.start(0);
+      vocalsPlayer.current?.start(0);
     }
+    setIsPlaying((prev) => !prev);
   };
 
   const onReverbChange = async (newReverbVal: number) => {
@@ -117,7 +119,7 @@ const MultiWaveform = ({ vocalsUrl, remixUrl, bpm }: any) => {
   return (
     <Box width={"60%"}>
       <IconButton onClick={toggleTransport}>
-        {isPlaying ? <PauseRoundedIcon /> : <PlayArrowRoundedIcon />}
+        {isPlaying ? <StopRounded /> : <PlayArrowRoundedIcon />}
       </IconButton>
       <Stack>
         <Box
@@ -127,17 +129,30 @@ const MultiWaveform = ({ vocalsUrl, remixUrl, bpm }: any) => {
           justifyContent={"space-between"}
         >
           <Typography>Instrument</Typography>
-          <Checkbox
-            defaultChecked
-            onChange={(e, checked) => {
-              if (checked && instrumentPlayer.current) {
-                instrumentPlayer.current.mute = false;
-              } else {
-                if (instrumentPlayer.current)
-                  instrumentPlayer.current.mute = true;
-              }
-            }}
-          />
+          <Box display={"flex"} alignItems="center">
+            <IconButton
+              onClick={() => {
+                const a = document.createElement("a");
+
+                a.href = remixUrl;
+                a.setAttribute("download", "audio.wav");
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+              }}
+            >
+              <DownloadRounded />
+            </IconButton>
+            <Checkbox
+              disabled
+              defaultChecked
+              onChange={(e, checked) => {
+                if (instrumentPlayer.current) {
+                  instrumentPlayer.current.mute = !checked;
+                }
+              }}
+            />
+          </Box>
         </Box>
         <Box
           display={"flex"}
@@ -146,16 +161,27 @@ const MultiWaveform = ({ vocalsUrl, remixUrl, bpm }: any) => {
           justifyContent={"space-between"}
         >
           <Typography>Vocals</Typography>
-          <Checkbox
-            defaultChecked
-            onChange={(e, checked) => {
-              if (checked && vocalsPlayer.current) {
-                vocalsPlayer.current.mute = false;
-              } else {
-                if (vocalsPlayer.current) vocalsPlayer.current.mute = true;
-              }
-            }}
-          />
+          <Box display={"flex"} alignItems="center">
+            <IconButton
+              onClick={() => {
+                const a = document.createElement("a");
+
+                a.href = vocalsUrl;
+                a.setAttribute("download", "audio.wav");
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+              }}
+            >
+              <DownloadRounded />
+            </IconButton>
+            <Checkbox
+              defaultChecked
+              onChange={(e, checked) => {
+                if (vocalsPlayer.current) vocalsPlayer.current.mute = !checked;
+              }}
+            />
+          </Box>
         </Box>
         <Divider />
         <Box mt={2} display={"flex"} gap={4}>
