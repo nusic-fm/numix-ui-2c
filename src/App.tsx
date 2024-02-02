@@ -11,6 +11,7 @@ import { LoadingButton } from "@mui/lab";
 import MultiWaveform from "./components/MultiWaveform";
 import { fileToArraybuffer } from "./helpers/audio";
 import { getYouTubeVideoId } from "./helpers";
+import { useNavigate } from "react-router-dom";
 
 const genreNames = [
   "Progressive House",
@@ -52,6 +53,7 @@ function App() {
   const [newAudio, setNewAudio] = useState<string>();
   const [longerAudioLoading, setLongerAudioLoading] = useState<boolean>(false);
   const [allin1Analysis, setAllIn1Analysis] = useState<Allin1Anaysis>();
+  const navigate = useNavigate();
   // JSON.parse(
   //   '{"msg":"allin1","segments":[{"start":0.0,"end":0.01,"label":"verse"},{"start":0.01,"end":15.99,"label":"verse"},{"start":15.99,"end":16.0,"label":"verse"}],"bpm":120,"beats":[0.49,1.0,1.49,2.0,2.49,2.99,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0,7.49,8.0,8.5,9.0,9.49,10.0,10.49,11.0,11.5,12.0,12.5,13.0,13.5,14.0,14.5,15.0,15.49],"downbeats":[0.49,2.49,4.5,6.5,8.5,10.49,12.5,14.5],"beat_positions":[1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3]}'
   // )
@@ -253,7 +255,10 @@ function App() {
       width={{ xs: "100vw", md: "unset" }}
       position="relative"
     >
-      <Typography sx={{ position: "absolute", top: 0, right: 10 }}>
+      <Typography
+        sx={{ position: "absolute", top: 0, right: 10 }}
+        onClick={() => navigate("/fx")}
+      >
         {readyStateString} - {isReady ? "Model Ready" : "Model Not Ready"}
       </Typography>
       <motion.div

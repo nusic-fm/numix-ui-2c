@@ -5,14 +5,15 @@ import App from "./App";
 import "./index.css";
 import theme from "./theme";
 import {
-  createBrowserRouter,
+  // createBrowserRouter,
+  createHashRouter,
   RouterProvider,
   // Route,
   // Link,
 } from "react-router-dom";
 import Fx from "./Fx";
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     element: <App />,
