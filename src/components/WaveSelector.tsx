@@ -70,6 +70,7 @@ const WaveSelector = ({ url, analysis, onSliceSelection }: Props) => {
         });
         onSliceSelection(newStart, newEnd);
       });
+      // TODO:
       onSliceSelection(0, 6);
       // set beats
       analysis.beats.map((b) => {
@@ -145,6 +146,7 @@ const WaveSelector = ({ url, analysis, onSliceSelection }: Props) => {
                   regionsWs.current
                     ?.getRegions()[0]
                     .setOptions({ start: seg.start, end: seg.end });
+                  if (onSliceSelection) onSliceSelection(seg.start, seg.end);
                 }}
               />
             ))}

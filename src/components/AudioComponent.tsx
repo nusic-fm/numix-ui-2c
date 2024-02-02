@@ -244,7 +244,8 @@ const AudioComponent = () => {
                 min={0.5}
                 max={1.5}
                 step={0.01}
-                value={speedFactor}
+                defaultValue={1}
+                // value={speedFactor}
                 // marks
                 onChange={(e, newVal) => {
                   const vocalPitchFactorParam =
@@ -280,7 +281,8 @@ const AudioComponent = () => {
                 min={0.5}
                 max={1.5}
                 step={0.01}
-                value={pitchFactor}
+                defaultValue={1}
+                // value={pitchFactor}
                 // marks
                 onChange={(e, newVal) => {
                   const vocalPitchFactorParam =
@@ -311,7 +313,8 @@ const AudioComponent = () => {
                 min={0}
                 max={1}
                 step={0.01}
-                value={vocalGain}
+                defaultValue={1}
+                // value={vocalGain}
                 // marks
                 onChange={(e, newVal) => {
                   const _vocalGain = (newVal as number) ** 0.9;
@@ -326,10 +329,11 @@ const AudioComponent = () => {
               <Slider
                 valueLabelDisplay="auto"
                 valueLabelFormat={(v) => v.toFixed(2)}
-                min={0.5}
-                max={1.5}
+                min={0}
+                max={0.75}
                 step={0.01}
-                value={delayGain}
+                defaultValue={0}
+                // value={delayGain}
                 // marks
                 onChange={(e, newVal) => {
                   const _delayGain = (newVal as number) ** 0.9;
@@ -349,7 +353,8 @@ const AudioComponent = () => {
                 min={0}
                 max={1}
                 step={0.01}
-                value={reverbGain}
+                defaultValue={0}
+                // value={reverbGain}
                 // marks
                 onChange={(e, newVal) => {
                   const _reverbGain = (newVal as number) ** 0.9;
@@ -366,10 +371,11 @@ const AudioComponent = () => {
               <Slider
                 valueLabelDisplay="auto"
                 getAriaValueText={(v) => v.toString()}
-                min={0.5}
+                min={0}
                 max={0.75}
                 step={0.01}
-                value={flangerGain}
+                defaultValue={0}
+                // value={flangerGain}
                 // marks
                 onChange={(e, newVal) => {
                   const _flangerGain = (newVal as number) ** 0.9;
