@@ -4,11 +4,29 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import theme from "./theme";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  // Route,
+  // Link,
+} from "react-router-dom";
+import Fx from "./Fx";
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <App />,
+  },
+  {
+    path: "/fx",
+    element: <Fx />,
+  },
+]);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
-      <App />
+      <RouterProvider router={router} />
     </ThemeProvider>
   </React.StrictMode>
 );
