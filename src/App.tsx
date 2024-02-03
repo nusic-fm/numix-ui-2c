@@ -1,4 +1,10 @@
-import { Box, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { useEffect, useState } from "react";
 import "./App.css";
 import Uploader from "./components/Uploader";
@@ -12,6 +18,7 @@ import MultiWaveform from "./components/MultiWaveform";
 import { fileToArraybuffer } from "./helpers/audio";
 import { getYouTubeVideoId } from "./helpers";
 import { useNavigate } from "react-router-dom";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 const genreNames = [
   "Progressive House",
@@ -53,13 +60,14 @@ function App() {
   const [newAudio, setNewAudio] = useState<string>();
   const [longerAudioLoading, setLongerAudioLoading] = useState<boolean>(false);
   const [allin1Analysis, setAllIn1Analysis] = useState<Allin1Anaysis>();
-  const navigate = useNavigate();
+  const [loadingVid, setLoadingVid] = useState(false);
   // JSON.parse(
   //   '{"msg":"allin1","segments":[{"start":0.0,"end":0.01,"label":"verse"},{"start":0.01,"end":15.99,"label":"verse"},{"start":15.99,"end":16.0,"label":"verse"}],"bpm":120,"beats":[0.49,1.0,1.49,2.0,2.49,2.99,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0,7.49,8.0,8.5,9.0,9.49,10.0,10.49,11.0,11.5,12.0,12.5,13.0,13.5,14.0,14.5,15.0,15.49],"downbeats":[0.49,2.49,4.5,6.5,8.5,10.49,12.5,14.5],"beat_positions":[1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3]}'
   // )
+  const navigate = useNavigate();
 
   const [youtubeLink, setYoutubeLink] = useState<string>("");
-  const [vid, setVid] = useState<string>("");
+  const [vid, setVid] = useState("");
   const [isReady, setIsReady] = useState(false);
   const {
     sendMessage,
@@ -107,7 +115,7 @@ function App() {
   };
 
   const onDropMusicUpload = (acceptedFiles: File[]) => {
-    if (acceptedFiles.length) {
+    if (acceptedFiles.length && !loadingVid) {
       const melody = acceptedFiles[0];
       setMelodyFile(melody);
       setMelodyUrl(URL.createObjectURL(melody));
@@ -177,10 +185,11 @@ function App() {
     //   end: 16,
     //   description: "Progressive House",
     // });
+    setLoadingVid(false);
     const obj = {
       msg: "generate_short",
-      descriptions: genreNames,
-      durations: Array(10).fill(1),
+      descriptions: genreNames.slice(0, 2),
+      durations: Array(2).fill(1),
       vid,
     };
     sendJsonMessage(obj);
@@ -192,12 +201,13 @@ function App() {
     }
   }, [vid]);
 
-  useEffect(() => {
+  const getVidFromYtbLink = () => {
+    setLoadingVid(true);
     const vid = getYouTubeVideoId(youtubeLink);
     if (youtubeLink && readyStateString === "OPEN" && vid) {
       sendJsonMessage({ msg: "ytp", url: youtubeLink, vid });
     }
-  }, [youtubeLink]);
+  };
 
   useEffect(() => {
     if (lastMessage) {
@@ -252,7 +262,8 @@ function App() {
   return (
     <Box
       height={"90vh"}
-      width={{ xs: "100vw", md: "unset" }}
+      // width={{ xs: "100vw", md: "unset" }}
+      px={{ xs: "5%", md: "10%", lg: "15%" }}
       position="relative"
     >
       <Typography
@@ -270,24 +281,59 @@ function App() {
           width="100%"
           display={"flex"}
           justifyContent="center"
+          flexWrap={"wrap"}
           gap={2}
         >
-          <TextField
-            disabled={!!vid}
-            sx={{ width: "440px" }}
-            label="Youtube Link"
-            color="secondary"
-            value={youtubeLink}
-            onChange={(e) => setYoutubeLink(e.target.value)}
-          />
-        </Box>
-        <Box mt={4} width="100%" display={"flex"} justifyContent="center">
-          <Uploader
-            onDrop={onDropMusicUpload}
-            melodyFile={melodyFile}
-            initializeTone={initializeTone}
-            playAudio={playAudio}
-          />
+          <Box
+            flexBasis={{ xs: "100%", md: "63%" }}
+            display="flex"
+            alignItems={"center"}
+          >
+            <TextField
+              fullWidth
+              disabled={!!vid}
+              sx={{
+                ".MuiInputBase-root": {
+                  borderRadius: "8px",
+                },
+                ".MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#929292",
+                },
+              }}
+              label="Youtube Link"
+              color="secondary"
+              value={youtubeLink}
+              onChange={(e) => {
+                if (!loadingVid) setYoutubeLink(e.target.value);
+              }}
+              InputProps={{
+                endAdornment: (
+                  <Button
+                    onClick={getVidFromYtbLink}
+                    sx={{
+                      background:
+                        "linear-gradient(90deg, rgba(84,50,255,1) 0%, rgba(237,50,255,1) 100%)",
+                    }}
+                  >
+                    {loadingVid ? (
+                      <CircularProgress color="secondary" size={"24px"} />
+                    ) : (
+                      <ArrowForwardIcon color="secondary" />
+                    )}
+                  </Button>
+                ),
+              }}
+            />
+          </Box>
+          <Box flexBasis={{ xs: "100%", md: "34%" }}>
+            <Uploader
+              onDrop={onDropMusicUpload}
+              melodyFile={melodyFile}
+              initializeTone={initializeTone}
+              playAudio={playAudio}
+              vid={vid}
+            />
+          </Box>
         </Box>
         {vid && !showWaveSelector && (
           <Box mt={4} width="100%">
@@ -306,7 +352,7 @@ function App() {
         )}
         {/* showWaveSelector && */}
         {melodyUrl && showWaveSelector && !longerRemixUrl && (
-          <Box mt={4} width="100%" display={"flex"} justifyContent="center">
+          <Box mt={10} width="100%" display={"flex"} justifyContent="center">
             <WaveSelector
               url={melodyUrl}
               analysis={allin1Analysis}

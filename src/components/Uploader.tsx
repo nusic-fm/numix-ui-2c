@@ -1,15 +1,16 @@
 import { Box, Typography, Button, IconButton } from "@mui/material";
 import { useDropzone } from "react-dropzone";
-import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
+import FileUploadRoundedIcon from "@mui/icons-material/FileUploadRounded";
 
 type Props = {
   onDrop: (acceptedFiles: File[]) => void;
   initializeTone: () => void;
   playAudio: (url: string) => void;
   melodyFile?: File;
+  vid: string;
 };
 
-const Uploader = ({ onDrop, initializeTone, playAudio, melodyFile }: Props) => {
+const Uploader = ({ onDrop, initializeTone, melodyFile, vid }: Props) => {
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     maxFiles: 1,
@@ -18,7 +19,7 @@ const Uploader = ({ onDrop, initializeTone, playAudio, melodyFile }: Props) => {
 
   return (
     <Box
-      border={"1px dashed grey"}
+      border={"1px solid #929292"}
       borderRadius="8px"
       onClick={() => {
         initializeTone();
@@ -26,7 +27,22 @@ const Uploader = ({ onDrop, initializeTone, playAudio, melodyFile }: Props) => {
       }}
       display="flex"
       justifyContent={"center"}
+      alignItems="center"
+      height={56}
+      position={"relative"}
     >
+      {!!vid && (
+        <Box
+          position={"absolute"}
+          top={0}
+          left={0}
+          zIndex={9}
+          width="100%"
+          height="100%"
+          sx={{ borderRadius: "4px" }}
+          onClick={() => {}}
+        />
+      )}
       {melodyFile ? (
         <Button
           disabled
@@ -38,22 +54,30 @@ const Uploader = ({ onDrop, initializeTone, playAudio, melodyFile }: Props) => {
           {melodyFile.name}
         </Button>
       ) : (
-        <div
+        <Box
           {...getRootProps({ className: "dropzone" })}
-          style={{ cursor: "default", padding: "24px" }}
+          style={{ cursor: "default" }}
+          display="flex"
+          alignItems={"center"}
+          width="100%"
+          pl={"14px"}
+          gap={2}
         >
+          <IconButton
+            disabled={!!vid}
+            sx={{
+              borderRadius: "4px",
+              width: 42,
+              height: 36,
+              background:
+                "linear-gradient(90deg, rgba(84,50,255,1) 0%, rgba(237,50,255,1) 100%)",
+            }}
+          >
+            <FileUploadRoundedIcon color="secondary" />
+          </IconButton>
           <input {...getInputProps()} />
-          <Typography>Drop your Favorite Music to start NUMIXing</Typography>
-        </div>
-      )}
-      {melodyFile && (
-        <IconButton
-          onClick={() => {
-            if (melodyFile) playAudio(URL.createObjectURL(melodyFile));
-          }}
-        >
-          <PlayArrowRoundedIcon />
-        </IconButton>
+          <Typography align="center">Drop your Music here</Typography>
+        </Box>
       )}
     </Box>
   );
