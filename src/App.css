@@ -79,6 +79,12 @@ div::part(region) {
   border: 1px solid #f6f6f6;
   border-radius: 20px;
 }
+div ::part(cursor) {
+  height: 98%;
+  /* top: 28px; */
+  border-radius: 4px;
+  border: 1px solid #fff;
+}
 /* div::part(region) {
   transition: all 0.8s ease-in-out;
 } */

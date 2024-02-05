@@ -1,7 +1,7 @@
 import { PauseRounded } from "@mui/icons-material";
 import PlayArrowRounded from "@mui/icons-material/PlayArrowRounded";
 import {
-  Button,
+  // Button,
   Checkbox,
   Chip,
   FormControlLabel,
@@ -95,7 +95,7 @@ const WaveSelector = ({ url, analysis, onSliceSelection }: Props) => {
       // TODO:
       onSliceSelection(0, 6);
       // set beats
-      analysis.beats.map((b) => {
+      analysis.downbeats.map((b) => {
         regionsWs.current.addRegion({
           start: b,
           // content: (i + 1).toString(),
@@ -137,6 +137,7 @@ const WaveSelector = ({ url, analysis, onSliceSelection }: Props) => {
       )}
       <WavesurferPlayer
         height={100}
+        width="100%"
         cursorColor="#E26CFF"
         cursorWidth={3}
         // progressColor=""
@@ -151,23 +152,25 @@ const WaveSelector = ({ url, analysis, onSliceSelection }: Props) => {
         barWidth={5}
         barGap={5}
         barRadius={5}
+        minPxPerSec={50}
       />
       {wavesurfer && (
         <Box
           display={"flex"}
+          flexWrap="wrap"
           gap={4}
           my={4}
           // justifyContent="center"
           position={"relative"}
           alignItems="center"
         >
-          <Button
+          {/* <Button
             onClick={() => regionsWs.current.getRegions()[0].play()}
             color="info"
             // variant="outlined"
           >
             Play Selected section
-          </Button>
+          </Button> */}
           {analysis &&
             analysis.segments.map((seg) => (
               <Chip
@@ -179,6 +182,7 @@ const WaveSelector = ({ url, analysis, onSliceSelection }: Props) => {
                   regionsWs.current
                     ?.getRegions()[0]
                     .setOptions({ start: seg.start, end: seg.end });
+                  regionsWs.current?.getRegions()[0].play();
                   if (onSliceSelection) onSliceSelection(seg.start, seg.end);
                 }}
               />

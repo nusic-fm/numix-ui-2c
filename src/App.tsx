@@ -14,11 +14,12 @@ import DropsFace from "./components/DropsFace";
 import WaveSelector from "./components/WaveSelector";
 import useWebSocket from "react-use-websocket";
 import { LoadingButton } from "@mui/lab";
-import MultiWaveform from "./components/MultiWaveform";
+// import MultiWaveform from "./components/MultiWaveform";
 import { fileToArraybuffer } from "./helpers/audio";
 import { getYouTubeVideoId } from "./helpers";
 import { useNavigate } from "react-router-dom";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import AudioComponent from "./components/AudioComponent";
 
 const genreNames = [
   "Progressive House",
@@ -51,7 +52,7 @@ export type LongerSectionProps = {
 function App() {
   const [melodyFile, setMelodyFile] = useState<File>();
   const [melodyUrl, setMelodyUrl] = useState<string>();
-  // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/instrumental.wav?alt=media"
+  // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/arr.wav?alt=media"
   const [vocalsUrl, setVocalsUrl] = useState<string>();
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/vocals.wav?alt=media"
   const [longerRemixUrl, setLongerRemixUrl] = useState<string>();
@@ -60,10 +61,12 @@ function App() {
   const [newAudio, setNewAudio] = useState<string>();
   const [longerAudioLoading, setLongerAudioLoading] = useState<boolean>(false);
   const [allin1Analysis, setAllIn1Analysis] = useState<Allin1Anaysis>();
-  const [loadingVid, setLoadingVid] = useState(false);
   // JSON.parse(
   //   '{"msg":"allin1","segments":[{"start":0.0,"end":0.01,"label":"verse"},{"start":0.01,"end":15.99,"label":"verse"},{"start":15.99,"end":16.0,"label":"verse"}],"bpm":120,"beats":[0.49,1.0,1.49,2.0,2.49,2.99,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0,7.49,8.0,8.5,9.0,9.49,10.0,10.49,11.0,11.5,12.0,12.5,13.0,13.5,14.0,14.5,15.0,15.49],"downbeats":[0.49,2.49,4.5,6.5,8.5,10.49,12.5,14.5],"beat_positions":[1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3]}'
   // )
+  // https://www.youtube.com/watch?v=5z8TmIbyqwk
+  const [loadingVid, setLoadingVid] = useState(false);
+
   const navigate = useNavigate();
 
   const [youtubeLink, setYoutubeLink] = useState<string>("");
@@ -208,7 +211,7 @@ function App() {
       sendJsonMessage({ msg: "ytp", url: youtubeLink, vid });
     }
   };
-
+  console.log({ vocalsUrl, longerRemixUrl });
   useEffect(() => {
     if (lastMessage) {
       const data = lastMessage.data;
@@ -362,10 +365,16 @@ function App() {
         )}
         {longerRemixUrl && vocalsUrl && (
           <Box mt={4} width="100%" display={"flex"} justifyContent="center">
-            <MultiWaveform
+            {/* <MultiWaveform
               vocalsUrl={vocalsUrl}
               remixUrl={longerRemixUrl}
               bpm={allin1Analysis?.bpm}
+            /> */}
+            <AudioComponent
+              instrumentalUrl={longerRemixUrl}
+              vocalsUrl={vocalsUrl}
+              vid={vid}
+              selectedGenre={sectionInfo?.description ?? "Error"}
             />
           </Box>
         )}
@@ -379,7 +388,7 @@ function App() {
             >
               {showWaveSelector
                 ? "Generate"
-                : `Proceed with ${sectionInfo?.description}`}
+                : `Section with ${sectionInfo?.description}`}
             </LoadingButton>
           </Box>
         )}
