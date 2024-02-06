@@ -26,7 +26,7 @@ const themeSettings = createTheme({
       main: "#ffffff",
     },
     info: {
-      main: "#A794FF",
+      main: "#8973F8",
     },
     customPaper: {
       main: "#141414",

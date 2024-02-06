@@ -109,6 +109,9 @@ const WaveSelector = ({ url, analysis, onSliceSelection }: Props) => {
 
   return (
     <Stack width={"80%"} ref={transitionClsRef}>
+      <Typography sx={{ my: 2 }} variant="h6">
+        Select a section to Remix (max 30s)
+      </Typography>
       <Box display={"flex"} gap={4} position={"relative"} alignItems="center">
         <IconButton onClick={() => wavesurfer?.playPause()}>
           {isPlaying ? <PauseRounded /> : <PlayArrowRounded />}
@@ -152,7 +155,7 @@ const WaveSelector = ({ url, analysis, onSliceSelection }: Props) => {
         barWidth={5}
         barGap={5}
         barRadius={5}
-        minPxPerSec={50}
+        // minPxPerSec={50}
       />
       {wavesurfer && (
         <Box
@@ -160,9 +163,13 @@ const WaveSelector = ({ url, analysis, onSliceSelection }: Props) => {
           flexWrap="wrap"
           gap={4}
           my={4}
+          p={2}
+          borderRadius="8px"
           // justifyContent="center"
           position={"relative"}
           alignItems="center"
+          justifyContent={"center"}
+          // sx={{ backgroundColor: "#8973F8" }}
         >
           {/* <Button
             onClick={() => regionsWs.current.getRegions()[0].play()}
@@ -172,20 +179,88 @@ const WaveSelector = ({ url, analysis, onSliceSelection }: Props) => {
             Play Selected section
           </Button> */}
           {analysis &&
-            analysis.segments.map((seg) => (
-              <Chip
+            analysis.segments.map((seg, i) => (
+              // <Chip
+              //   key={seg.start}
+              //   clickable
+              //   label={`${seg.start}-${seg.end}s`}
+              //   color="secondary"
+              //   onClick={() => {
+              //     regionsWs.current
+              //       ?.getRegions()[0]
+              //       .setOptions({ start: seg.start, end: seg.end });
+              //     regionsWs.current?.getRegions()[0].play();
+              //     if (onSliceSelection) onSliceSelection(seg.start, seg.end);
+              //   }}
+              // />
+              <Stack
                 key={seg.start}
-                clickable
-                label={`${seg.start}-${seg.end}s`}
-                color="secondary"
-                onClick={() => {
-                  regionsWs.current
-                    ?.getRegions()[0]
-                    .setOptions({ start: seg.start, end: seg.end });
-                  regionsWs.current?.getRegions()[0].play();
-                  if (onSliceSelection) onSliceSelection(seg.start, seg.end);
-                }}
-              />
+                sx={{ bgcolor: "#E0E0E0", color: "black" }}
+                borderRadius="20px"
+                p={2}
+                width={140}
+                height={100}
+                position="relative"
+              >
+                <Box
+                  position={"absolute"}
+                  top={0}
+                  left={0}
+                  width="100%"
+                  height="100%"
+                  display={"flex"}
+                  alignItems="center"
+                  justifyContent={"center"}
+                >
+                  <img src="wave.svg" alt="" width={40} />
+                </Box>
+                <Box
+                  display={"flex"}
+                  justifyContent="space-between"
+                  alignItems={"center"}
+                >
+                  <Box
+                    width={5}
+                    height={5}
+                    boxShadow={"0px 4px 7.7px 0px rgba(0,0,0,0.25%)"}
+                    sx={{ bgcolor: "#fff", color: "#9A9A9A" }}
+                    p={2}
+                    borderRadius="50%"
+                    display={"flex"}
+                    alignItems="center"
+                    justifyContent={"center"}
+                  >
+                    {i + 1}
+                  </Box>
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      regionsWs.current
+                        ?.getRegions()[0]
+                        .setOptions({ start: seg.start, end: seg.end });
+                      regionsWs.current?.getRegions()[0].play();
+                      if (onSliceSelection)
+                        onSliceSelection(seg.start, seg.end);
+                    }}
+                    sx={{ background: "#403478", borderRadius: "9px" }}
+                  >
+                    <PlayArrowRounded />
+                  </IconButton>
+                </Box>
+                <Box
+                  display={"flex"}
+                  justifyContent="space-between"
+                  alignItems={"center"}
+                  mt={"auto"}
+                >
+                  <Typography color={"#979797"} fontSize="14px">
+                    {(seg.end - seg.start).toFixed(0)}s
+                  </Typography>
+                  <Typography color={"#979797"} fontSize="14px">
+                    {seg.start.toFixed(0)}-{seg.end.toFixed(0)}
+                  </Typography>
+                </Box>
+              </Stack>
             ))}
         </Box>
       )}

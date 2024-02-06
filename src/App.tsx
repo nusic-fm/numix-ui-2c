@@ -20,6 +20,7 @@ import { getYouTubeVideoId } from "./helpers";
 import { useNavigate } from "react-router-dom";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import AudioComponent from "./components/AudioComponent";
+import axios from "axios";
 
 const genreNames = [
   "Progressive House",
@@ -48,21 +49,34 @@ export type LongerSectionProps = {
   end: number;
   url: string;
 };
+export type FX_PARAMS = {
+  speedFactor: number;
+  pitchFactor: number;
+  vocalGain: number;
+  instrGain: number;
+  warpBypassed: boolean;
+  fxBypassed: boolean;
+  delayTime: number;
+  reverbGain: number;
+  flangerGain: number;
+};
 
 function App() {
   const [melodyFile, setMelodyFile] = useState<File>();
   const [melodyUrl, setMelodyUrl] = useState<string>();
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/arr.wav?alt=media"
   const [vocalsUrl, setVocalsUrl] = useState<string>();
+  const [vocalsBlob, setVocalsBlob] = useState<Blob>();
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/vocals.wav?alt=media"
   const [longerRemixUrl, setLongerRemixUrl] = useState<string>();
+  const [longerRemixBlob, setLongerRemixBlob] = useState<Blob>();
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/instrumental.wav?alt=media"
-  const [showWaveSelector, setShowWaveSelector] = useState(false);
+  const [showWaveSelector, setShowWaveSelector] = useState(true);
   const [newAudio, setNewAudio] = useState<string>();
   const [longerAudioLoading, setLongerAudioLoading] = useState<boolean>(false);
   const [allin1Analysis, setAllIn1Analysis] = useState<Allin1Anaysis>();
   // JSON.parse(
-  //   '{"msg":"allin1","segments":[{"start":0.0,"end":0.01,"label":"verse"},{"start":0.01,"end":15.99,"label":"verse"},{"start":15.99,"end":16.0,"label":"verse"}],"bpm":120,"beats":[0.49,1.0,1.49,2.0,2.49,2.99,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0,7.49,8.0,8.5,9.0,9.49,10.0,10.49,11.0,11.5,12.0,12.5,13.0,13.5,14.0,14.5,15.0,15.49],"downbeats":[0.49,2.49,4.5,6.5,8.5,10.49,12.5,14.5],"beat_positions":[1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3]}'
+  //   '{"msg":"allin1","segments":[{"start":0.0,"end":0.01,"label":"verse"},{"start":0.01,"end":15.99,"label":"verse"},{"start":15.99,"end":16.0,"label":"verse"},{"start":15.99,"end":16.0,"label":"verse"},{"start":15.99,"end":16.0,"label":"verse"},{"start":15.99,"end":16.0,"label":"verse"},{"start":15.99,"end":16.0,"label":"verse"},{"start":15.99,"end":16.0,"label":"verse"}],"bpm":120,"beats":[0.49,1.0,1.49,2.0,2.49,2.99,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0,7.49,8.0,8.5,9.0,9.49,10.0,10.49,11.0,11.5,12.0,12.5,13.0,13.5,14.0,14.5,15.0,15.49],"downbeats":[0.49,2.49,4.5,6.5,8.5,10.49,12.5,14.5],"beat_positions":[1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3]}'
   // )
   // https://www.youtube.com/watch?v=5z8TmIbyqwk
   const [loadingVid, setLoadingVid] = useState(false);
@@ -198,6 +212,63 @@ function App() {
     sendJsonMessage(obj);
   };
 
+  const onFinish = async ({
+    speedFactor,
+    pitchFactor,
+    vocalGain,
+    instrGain,
+    warpBypassed,
+    fxBypassed,
+    delayTime,
+    reverbGain,
+    flangerGain,
+  }: FX_PARAMS) => {
+    if (vocalsBlob && longerRemixBlob) {
+      const formdata = new FormData();
+      formdata.append("vocals", vocalsBlob);
+      formdata.append("intrumental", longerRemixBlob);
+      formdata.append(
+        "fx_params",
+        JSON.stringify({
+          speedFactor,
+          pitchFactor,
+          vocalGain,
+          instrGain,
+          warpBypassed,
+          fxBypassed,
+          delay: {
+            delayTime,
+            delayFeedback: 0.3,
+            delayCutoff: 1000,
+            delayGain: 0,
+          },
+          reverb: { reverbGain, rirPath: "rir.wav" },
+          flanger: {
+            flangerDelayTime: 0.005,
+            flangerDepth: 0.0025,
+            flangerRate: 0.6,
+            flangerFeedback: 0.8,
+            flangerCutoff: 1000,
+            flangerGain,
+          },
+        })
+      );
+
+      const res = await axios.post(
+        `${import.meta.env.VITE_AUDIO_ANALYSER_PY}/remix`,
+        formdata
+      );
+      const blob = new Blob([res.data], { type: "audio/wav" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "remix.wav";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
+
   useEffect(() => {
     if (vid) {
       onFetchShorts();
@@ -219,10 +290,12 @@ function App() {
         if (longerAudioLoading) {
           const blob = new Blob([data], { type: "audio/wav" });
           setLongerRemixUrl(URL.createObjectURL(blob));
+          setLongerRemixBlob(blob);
           setLongerAudioLoading(false);
         } else if (longerRemixUrl && !vocalsUrl) {
           const blob = new Blob([data], { type: "audio/wav" });
           setVocalsUrl(URL.createObjectURL(blob));
+          setVocalsBlob(blob);
         } else if (!melodyUrl) {
           const blob = new Blob([data], { type: "audio/wav" });
           setMelodyUrl(URL.createObjectURL(blob));
@@ -375,6 +448,7 @@ function App() {
               vocalsUrl={vocalsUrl}
               vid={vid}
               selectedGenre={sectionInfo?.description ?? "Error"}
+              onFinish={onFinish}
             />
           </Box>
         )}
