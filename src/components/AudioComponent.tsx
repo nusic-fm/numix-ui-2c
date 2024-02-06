@@ -74,6 +74,7 @@ const AudioComponent = ({
   const [noWorkletVisible, setNoWorkletVisible] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [instrDurationInSec, setInstrDurationInSec] = useState<number>(0);
 
   const vocalPlayControlRef = useRef<any>(null);
   const vocalPhaseVocoderNodeRef = useRef<any>(null);
@@ -190,6 +191,7 @@ const AudioComponent = ({
       const instrPlayControl = new wavesAudio.PlayControl(instrPlayerEngine);
       instrPlayControl.setLoopBoundaries(0, instrBuffer.duration);
       instrPlayControl.loop = true;
+      setInstrDurationInSec(instrBuffer.duration);
 
       const { delayNode, delayGainNode } = setupDelay(audioContext);
       const reverbBuffer = await loader.load("./rir.wav");
@@ -324,7 +326,7 @@ const AudioComponent = ({
             </Fab>
           </Box>
           <div ref={containerRef} style={{ width: "60%" }}></div>
-          <Typography>00:45</Typography>
+          <Typography variant="caption">00:{instrDurationInSec}</Typography>
           <IconButton sx={{ ml: "auto" }}>
             <DownloadRounded color="secondary" />
           </IconButton>
@@ -594,6 +596,8 @@ const AudioComponent = ({
       </Stack>
       <Box mt={4} display={"flex"} justifyContent="center">
         <Button
+          variant="outlined"
+          color="info"
           onClick={() =>
             onFinish({
               delayTime,

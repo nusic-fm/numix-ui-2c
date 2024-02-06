@@ -71,7 +71,7 @@ function App() {
   const [longerRemixUrl, setLongerRemixUrl] = useState<string>();
   const [longerRemixBlob, setLongerRemixBlob] = useState<Blob>();
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/instrumental.wav?alt=media"
-  const [showWaveSelector, setShowWaveSelector] = useState(true);
+  const [showWaveSelector, setShowWaveSelector] = useState(false);
   const [newAudio, setNewAudio] = useState<string>();
   const [longerAudioLoading, setLongerAudioLoading] = useState<boolean>(false);
   const [allin1Analysis, setAllIn1Analysis] = useState<Allin1Anaysis>();
