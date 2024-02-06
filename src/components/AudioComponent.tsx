@@ -23,6 +23,14 @@ import { useWavesurfer } from "../hooks/useWavesurfer";
 import PowerSettingsNewOutlinedIcon from "@mui/icons-material/PowerSettingsNewOutlined";
 import { FX_PARAMS } from "../App";
 
+const sliderSize = {
+  height: "14px",
+  ".MuiSlider-thumb": {
+    width: "18px",
+    height: "35px",
+    borderRadius: "6px",
+  },
+};
 const AudioComponent = ({
   vocalsUrl,
   instrumentalUrl,
@@ -269,6 +277,7 @@ const AudioComponent = ({
               sx={{
                 background: `url('https://i.ytimg.com/vi/${vid}/maxresdefault.jpg')`,
                 backgroundSize: "cover",
+                backgroundPosition: "center",
               }}
             />
             <Box>
@@ -361,6 +370,7 @@ const AudioComponent = ({
           <Stack width={200} flexBasis="50%">
             <Typography gutterBottom>Speed</Typography>
             <Slider
+              sx={sliderSize}
               color="info"
               valueLabelDisplay="auto"
               getAriaValueText={(v) => v.toString()}
@@ -403,6 +413,7 @@ const AudioComponent = ({
           <Stack width={200} flexBasis="50%">
             <Typography gutterBottom>Pitch</Typography>
             <Slider
+              sx={sliderSize}
               color="info"
               valueLabelDisplay="auto"
               getAriaValueText={(v) => v.toString()}
@@ -478,6 +489,7 @@ const AudioComponent = ({
           <Stack width={200} flexBasis="25%">
             <Typography gutterBottom>Delay</Typography>
             <Slider
+              sx={sliderSize}
               color="info"
               valueLabelDisplay="auto"
               valueLabelFormat={(v) => v.toFixed(2)}
@@ -505,6 +517,7 @@ const AudioComponent = ({
           <Stack width={200} flexBasis="25%">
             <Typography gutterBottom>Reverb</Typography>
             <Slider
+              sx={sliderSize}
               color="info"
               valueLabelDisplay="auto"
               valueLabelFormat={(v) => v.toFixed(2)}
@@ -531,6 +544,7 @@ const AudioComponent = ({
           <Stack width={200} flexBasis="25%">
             <Typography gutterBottom>Flanger</Typography>
             <Slider
+              sx={sliderSize}
               color="info"
               valueLabelDisplay="auto"
               getAriaValueText={(v) => v.toString()}
@@ -557,6 +571,7 @@ const AudioComponent = ({
           <Stack width={200} flexBasis="25%">
             <Typography gutterBottom>Vocal</Typography>
             <Slider
+              sx={sliderSize}
               color="info"
               valueLabelDisplay="auto"
               getAriaValueText={(v) => v.toString()}
