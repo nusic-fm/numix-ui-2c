@@ -44,3 +44,9 @@ export const convertSecondsToHHMMSS = (totalSeconds: number) => {
 
   return hhmmss;
 };
+
+export const getObjectURLBlob = async (url: string) => {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return blob;
+};

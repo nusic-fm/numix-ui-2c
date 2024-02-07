@@ -279,10 +279,9 @@ function App() {
     setLoadingVid(true);
     const vid = getYouTubeVideoId(youtubeLink);
     if (youtubeLink && readyStateString === "OPEN" && vid) {
-      sendJsonMessage({ msg: "ytp", url: youtubeLink, vid });
+      sendJsonMessage({ msg: "ytp", vid });
     }
   };
-  console.log({ vocalsUrl, longerRemixUrl });
   useEffect(() => {
     if (lastMessage) {
       const data = lastMessage.data;
@@ -339,134 +338,146 @@ function App() {
     <Box
       height={"90vh"}
       // width={{ xs: "100vw", md: "unset" }}
-      px={{ xs: "5%", md: "10%", lg: "15%" }}
-      position="relative"
+      // position="relative"
     >
-      <Typography
-        sx={{ position: "absolute", top: 0, right: 10 }}
-        onClick={() => navigate("/fx")}
+      <Box
+        display={"flex"}
+        alignItems="center"
+        p={2}
+        justifyContent="space-between"
       >
-        {readyStateString} - {isReady ? "Model Ready" : "Model Not Ready"}
-      </Typography>
-      <motion.div
-        animate={{ y: vid ? "10%" : "40vh" }}
-        transition={{ type: "spring", duration: 1 }}
-      >
-        <Box
-          mt={4}
-          width="100%"
-          display={"flex"}
-          justifyContent="center"
-          flexWrap={"wrap"}
-          gap={2}
+        <img src="numix.png" alt="" width={140} />
+        <Typography onClick={() => navigate("/fx")}>
+          {readyStateString} - {isReady ? "Model Ready" : "Model Not Ready"}
+        </Typography>
+      </Box>
+
+      <Box px={{ xs: "5%", md: "10%", lg: "15%" }}>
+        <motion.div
+          animate={{ y: vid ? "5%" : "20vh" }}
+          transition={{ type: "spring", duration: 1 }}
         >
+          <motion.div animate={{ display: vid ? "none" : "unset" }}>
+            <Typography variant="h3" align="center" textTransform={"uppercase"}>
+              Remix any Song with NUMIX
+            </Typography>
+          </motion.div>
           <Box
-            flexBasis={{ xs: "100%", md: "63%" }}
-            display="flex"
-            alignItems={"center"}
+            mt={10}
+            width="100%"
+            display={"flex"}
+            justifyContent="center"
+            flexWrap={"wrap"}
+            gap={2}
           >
-            <TextField
-              fullWidth
-              disabled={!!vid}
-              sx={{
-                ".MuiInputBase-root": {
-                  borderRadius: "8px",
-                },
-                ".MuiOutlinedInput-notchedOutline": {
-                  borderColor: "#929292",
-                },
-              }}
-              label="Youtube Link"
-              color="secondary"
-              value={youtubeLink}
-              onChange={(e) => {
-                if (!loadingVid) setYoutubeLink(e.target.value);
-              }}
-              InputProps={{
-                endAdornment: (
-                  <Button
-                    onClick={getVidFromYtbLink}
-                    sx={{
-                      background:
-                        "linear-gradient(90deg, rgba(84,50,255,1) 0%, rgba(237,50,255,1) 100%)",
-                    }}
-                  >
-                    {loadingVid ? (
-                      <CircularProgress color="secondary" size={"24px"} />
-                    ) : (
-                      <ArrowForwardIcon color="secondary" />
-                    )}
-                  </Button>
-                ),
-              }}
-            />
-          </Box>
-          <Box flexBasis={{ xs: "100%", md: "34%" }}>
-            <Uploader
-              onDrop={onDropMusicUpload}
-              melodyFile={melodyFile}
-              initializeTone={initializeTone}
-              playAudio={playAudio}
-              vid={vid}
-            />
-          </Box>
-        </Box>
-        {vid && !showWaveSelector && (
-          <Box mt={4} width="100%">
-            <Box mt={4} width="100%" display={"flex"} justifyContent="center">
-              <DropsFace
-                genreNames={genreNames}
-                isTonePlaying={isTonePlaying}
-                stopPlayer={stopPlayer}
-                playPlayer={playPlayer}
-                newAudio={newAudio}
+            <Box
+              flexBasis={{ xs: "100%", md: "63%" }}
+              display="flex"
+              alignItems={"center"}
+            >
+              <TextField
+                fullWidth
+                disabled={!!vid}
+                sx={{
+                  ".MuiInputBase-root": {
+                    borderRadius: "8px",
+                  },
+                  ".MuiOutlinedInput-notchedOutline": {
+                    borderColor: "#929292",
+                  },
+                }}
+                label="Youtube Link"
+                color="secondary"
+                value={youtubeLink}
+                onChange={(e) => {
+                  if (!loadingVid) setYoutubeLink(e.target.value);
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <Button
+                      onClick={getVidFromYtbLink}
+                      sx={{
+                        background:
+                          "linear-gradient(90deg, rgba(84,50,255,1) 0%, rgba(237,50,255,1) 100%)",
+                      }}
+                    >
+                      {loadingVid ? (
+                        <CircularProgress color="secondary" size={"24px"} />
+                      ) : (
+                        <ArrowForwardIcon color="secondary" />
+                      )}
+                    </Button>
+                  ),
+                }}
+              />
+            </Box>
+            <Box flexBasis={{ xs: "100%", md: "34%" }}>
+              <Uploader
+                onDrop={onDropMusicUpload}
+                melodyFile={melodyFile}
+                initializeTone={initializeTone}
                 playAudio={playAudio}
-                onGenreSelection={onGenreSelection}
+                vid={vid}
               />
             </Box>
           </Box>
-        )}
-        {/* showWaveSelector && */}
-        {melodyUrl && showWaveSelector && !longerRemixUrl && (
-          <Box mt={10} width="100%" display={"flex"} justifyContent="center">
-            <WaveSelector
-              url={melodyUrl}
-              analysis={allin1Analysis}
-              onSliceSelection={onSliceSelection}
-            />
-          </Box>
-        )}
-        {longerRemixUrl && vocalsUrl && (
-          <Box mt={4} width="100%" display={"flex"} justifyContent="center">
-            {/* <MultiWaveform
+          {vid && !showWaveSelector && (
+            <Box mt={4} width="100%">
+              <Box mt={4} width="100%" display={"flex"} justifyContent="center">
+                <DropsFace
+                  genreNames={genreNames}
+                  isTonePlaying={isTonePlaying}
+                  stopPlayer={stopPlayer}
+                  playPlayer={playPlayer}
+                  newAudio={newAudio}
+                  playAudio={playAudio}
+                  onGenreSelection={onGenreSelection}
+                />
+              </Box>
+            </Box>
+          )}
+          {/* showWaveSelector && */}
+          {melodyUrl && showWaveSelector && !longerRemixUrl && (
+            <Box mt={10} width="100%" display={"flex"} justifyContent="center">
+              <WaveSelector
+                url={melodyUrl}
+                analysis={allin1Analysis}
+                onSliceSelection={onSliceSelection}
+              />
+            </Box>
+          )}
+          {longerRemixUrl && vocalsUrl && (
+            <Box mt={4} width="100%" display={"flex"} justifyContent="center">
+              {/* <MultiWaveform
               vocalsUrl={vocalsUrl}
               remixUrl={longerRemixUrl}
               bpm={allin1Analysis?.bpm}
             /> */}
-            <AudioComponent
-              instrumentalUrl={longerRemixUrl}
-              vocalsUrl={vocalsUrl}
-              vid={vid}
-              selectedGenre={sectionInfo?.description ?? "Error"}
-              onFinish={onFinish}
-            />
-          </Box>
-        )}
-        {newAudio && !longerRemixUrl && allin1Analysis && (
-          <Box mt={4} display={"flex"} justifyContent="center">
-            <LoadingButton
-              loading={longerAudioLoading}
-              variant={allin1Analysis ? "contained" : "outlined"}
-              color={allin1Analysis ? "primary" : "info"}
-              onClick={onGenerate}
-            >
-              {showWaveSelector
-                ? "Generate"
-                : `Section with ${sectionInfo?.description}`}
-            </LoadingButton>
-          </Box>
-        )}
-      </motion.div>
+              <AudioComponent
+                instrumentalUrl={longerRemixUrl}
+                vocalsUrl={vocalsUrl}
+                vid={vid}
+                selectedGenre={sectionInfo?.description ?? "Error"}
+                onFinish={onFinish}
+              />
+            </Box>
+          )}
+          {newAudio && !longerRemixUrl && allin1Analysis && (
+            <Box mt={4} display={"flex"} justifyContent="center">
+              <LoadingButton
+                loading={longerAudioLoading}
+                variant={allin1Analysis ? "contained" : "outlined"}
+                color={allin1Analysis ? "primary" : "info"}
+                onClick={onGenerate}
+              >
+                {showWaveSelector
+                  ? "Generate"
+                  : `Section with ${sectionInfo?.description}`}
+              </LoadingButton>
+            </Box>
+          )}
+        </motion.div>
+      </Box>
     </Box>
   );
 }
