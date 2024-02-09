@@ -33,7 +33,7 @@ const genreNames = [
   "Breakbeat",
   "Americana",
   "Reggaeton",
-];
+].sort();
 
 export type Allin1Anaysis = {
   beatPositions: number[];
