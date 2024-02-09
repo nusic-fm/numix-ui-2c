@@ -326,8 +326,26 @@ const AudioComponent = ({
             </Fab>
           </Box>
           <div ref={containerRef} style={{ width: "60%" }}></div>
-          <Typography variant="caption">00:{instrDurationInSec}</Typography>
-          <IconButton sx={{ ml: "auto" }}>
+          <Typography variant="caption">
+            00:{instrDurationInSec.toFixed(0)}
+          </Typography>
+          <IconButton
+            sx={{ ml: "auto" }}
+            onClick={() => {
+              const a = document.createElement("a");
+              a.href = instrumentalUrl;
+              a.setAttribute("download", "instr.wav");
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              const b = document.createElement("a");
+              b.href = vocalsUrl;
+              b.setAttribute("download", "vocals.wav");
+              document.body.appendChild(b);
+              b.click();
+              document.body.removeChild(b);
+            }}
+          >
             <DownloadRounded color="secondary" />
           </IconButton>
         </Box>

@@ -109,7 +109,7 @@ function App() {
     if (readyStateString === "OPEN" && isReady === false) {
       sendJsonMessage({ msg: "Connected to Client" });
     } else if (readyStateString === "OPEN" && longerAudioLoading) {
-      sendJsonMessage({ msg: "get_long_music", vid });
+      // sendJsonMessage({ msg: "get_long_music", vid });
     }
   }, [readyState]);
 
@@ -205,8 +205,8 @@ function App() {
     setLoadingVid(false);
     const obj = {
       msg: "generate_short",
-      descriptions: genreNames.slice(0, 2),
-      durations: Array(2).fill(1),
+      descriptions: genreNames.slice(0, 5),
+      durations: Array(5).fill(1),
       vid,
     };
     sendJsonMessage(obj);
@@ -226,7 +226,7 @@ function App() {
     if (vocalsBlob && longerRemixBlob) {
       const formdata = new FormData();
       formdata.append("vocals", vocalsBlob);
-      formdata.append("intrumental", longerRemixBlob);
+      formdata.append("instrumental", longerRemixBlob);
       formdata.append(
         "fx_params",
         JSON.stringify({
@@ -311,7 +311,7 @@ function App() {
         } else if (dataObj.msg === "saved" && dataObj.vid) {
           setVid(dataObj.vid);
         } else if (dataObj.msg === "status") {
-          sendJsonMessage({ msg: "get_long_music", vid });
+          // sendJsonMessage({ msg: "get_long_music", vid });
         }
       }
     }
