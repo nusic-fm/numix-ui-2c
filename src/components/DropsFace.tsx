@@ -107,13 +107,13 @@ const DropsFace = ({
     if (newAudio) {
       setAudioListObj((preAudioListObj) => {
         const currentIdx = Object.keys(preAudioListObj).length;
-        const idx = reorderArr[currentIdx] - 1;
-        const name = genreNames[idx];
+        // const idx = reorderArr[currentIdx] - 1;
+        const name = genreNames[currentIdx];
         return {
           ...preAudioListObj,
           [reorderArr[currentIdx].toString()]: {
             name,
-            color: getColorsForGroup(idx),
+            color: getColorsForGroup(currentIdx),
             duration: 1,
             url: newAudio,
           },
