@@ -229,7 +229,7 @@ function App() {
     if (vocalsBlob && longerRemixBlob) {
       await uploadFromAudioBlob(`${vid}/instr.wav`, longerRemixBlob);
       await uploadFromAudioBlob(`${vid}/vocals.wav`, vocalsBlob);
-      await createWrapperDoc(vid, {
+      await createWrapperDoc({
         vid,
         genre: sectionInfo?.description ?? "",
         title: musicInfo?.title ?? "",
