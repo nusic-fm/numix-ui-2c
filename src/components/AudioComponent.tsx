@@ -37,12 +37,14 @@ const AudioComponent = ({
   selectedGenre,
   vid,
   onFinish,
+  musicInfo,
 }: {
   vocalsUrl: string;
   instrumentalUrl: string;
   selectedGenre: string;
   vid: string;
   onFinish: (params: FX_PARAMS) => void;
+  musicInfo?: { title: string; tag: string };
 }) => {
   const containerRef = useRef(null);
   //   const [currentTime, setCurrentTime] = useState(0);
@@ -283,8 +285,8 @@ const AudioComponent = ({
               }}
             />
             <Box>
-              <Typography>Porcelain</Typography>
-              <Typography variant="caption">Hallow</Typography>
+              <Typography>{musicInfo?.title}</Typography>
+              <Typography variant="caption">{musicInfo?.tag}</Typography>
             </Box>
           </Box>
           <Stack>

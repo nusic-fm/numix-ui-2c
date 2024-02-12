@@ -85,6 +85,7 @@ function App() {
 
   const [youtubeLink, setYoutubeLink] = useState<string>("");
   const [vid, setVid] = useState("");
+  const [musicInfo, setMusicInfo] = useState<{ title: string; tag: string }>();
   const [isReady, setIsReady] = useState(false);
   const {
     sendMessage,
@@ -269,9 +270,24 @@ function App() {
     }
   };
 
+  const fetchMusicInfo = async (_vid: string) => {
+    try {
+      const formData = new FormData();
+      formData.append("vid", _vid);
+      const res = await axios.post(
+        import.meta.env.VITE_AUDIO_ANALYSER_PY + "/ytp-content",
+        formData
+      );
+      setMusicInfo({ title: res.data.title, tag: res.data.tag });
+    } catch {
+      console.error("Unable to fetch Track info");
+    }
+  };
+
   useEffect(() => {
     if (vid) {
       onFetchShorts();
+      if (youtubeLink) fetchMusicInfo(vid);
     }
   }, [vid]);
 
@@ -459,6 +475,7 @@ function App() {
                 vid={vid}
                 selectedGenre={sectionInfo?.description ?? "Error"}
                 onFinish={onFinish}
+                musicInfo={musicInfo}
               />
             </Box>
           )}
