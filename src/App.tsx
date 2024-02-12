@@ -21,6 +21,8 @@ import { useNavigate } from "react-router-dom";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import AudioComponent from "./components/AudioComponent";
 import axios from "axios";
+import { uploadFromAudioBlob } from "./services/storage/remix.service";
+import { createWrapperDoc } from "./services/db/wrapper.service";
 
 const genreNames = [
   "Progressive House",
@@ -225,6 +227,23 @@ function App() {
     flangerGain,
   }: FX_PARAMS) => {
     if (vocalsBlob && longerRemixBlob) {
+      await uploadFromAudioBlob(`${vid}/instr.wav`, longerRemixBlob);
+      await uploadFromAudioBlob(`${vid}/vocals.wav`, vocalsBlob);
+      await createWrapperDoc(vid, {
+        vid,
+        genre: sectionInfo?.description ?? "",
+        title: musicInfo?.title ?? "",
+        tag: musicInfo?.tag ?? "",
+        speedFactor,
+        pitchFactor,
+        vocalGain,
+        instrGain,
+        warpBypassed,
+        fxBypassed,
+        delayTime,
+        reverbGain,
+        flangerGain,
+      });
       const formdata = new FormData();
       formdata.append("vocals", vocalsBlob);
       formdata.append("instrumental", longerRemixBlob);

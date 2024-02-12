@@ -38,12 +38,14 @@ const AudioComponent = ({
   vid,
   onFinish,
   musicInfo,
+  initialProps,
 }: {
   vocalsUrl: string;
   instrumentalUrl: string;
   selectedGenre: string;
   vid: string;
   onFinish: (params: FX_PARAMS) => void;
+  initialProps?: FX_PARAMS;
   musicInfo?: { title: string; tag: string };
 }) => {
   const containerRef = useRef(null);
@@ -255,6 +257,20 @@ const AudioComponent = ({
       // Perform any necessary clean-up
     };
   }, []); // Empty dependency array to run the effect only once
+
+  useEffect(() => {
+    if (initialProps) {
+      setDelayTime(initialProps.delayTime);
+      setFlangerGain(initialProps.flangerGain);
+      setFxBypassed(initialProps.fxBypassed);
+      setInstrGain(initialProps.instrGain);
+      setPitchFactor(initialProps.pitchFactor);
+      setReverbGain(initialProps.reverbGain);
+      setSpeedFactor(initialProps.speedFactor);
+      setVocalGain(initialProps.vocalGain);
+      setWarpBypassed(initialProps.warpBypassed);
+    }
+  }, [initialProps]);
 
   return (
     <Box
