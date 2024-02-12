@@ -9,9 +9,8 @@ import { useState } from "react";
 const numixsRef = collection(db, "wrapper");
 
 const Fx = () => {
-  const [vid, setVid] = useState(
-    "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/instrumental.wav?alt=media"
-  );
+  const [vid, setVid] = useState("");
+  const [musicInfo, setMusicInfo] = useState<{ title: string; tag: string }>();
   const [instrumentalUrl, setInstrumentalUrl] = useState("");
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/instrumental.wav?alt=media"
   const [vocalsUrl, setVocalsUrl] = useState("");
@@ -19,11 +18,12 @@ const Fx = () => {
   const [values] = useCollectionDataOnce(query(numixsRef));
   const onWrapSelected = async (_vid: string) => {
     setVid(_vid);
+
     setInstrumentalUrl(
-      `https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/wrapper/${_vid}/instr.wav?alt=media`
+      `https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/wrapper%2F${_vid}%2Finstr.wav?alt=media`
     );
     setVocalsUrl(
-      `https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/wrapper/${_vid}/instr.wav?alt=media`
+      `https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/wrapper%2F${_vid}%2Fvocals.wav?alt=media`
     );
   };
 
@@ -34,9 +34,12 @@ const Fx = () => {
           <Chip
             color="secondary"
             key={v.vid}
-            label={v.name}
+            label={v.title}
             clickable
-            onClick={() => onWrapSelected(v.vid)}
+            onClick={() => {
+              setMusicInfo({ title: v.title, tag: v.tag });
+              onWrapSelected(v.vid);
+            }}
           />
         ))}
       </Box>
@@ -47,6 +50,7 @@ const Fx = () => {
           selectedGenre="Future Bass"
           instrumentalUrl={instrumentalUrl}
           vocalsUrl={vocalsUrl}
+          musicInfo={musicInfo}
         />
       )}
     </Box>
