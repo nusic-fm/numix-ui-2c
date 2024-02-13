@@ -9,6 +9,7 @@ import {
   IconButton,
   Skeleton,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
 import { Box } from "@mui/system";
@@ -36,8 +37,14 @@ type Props = {
   url: string;
   analysis?: Allin1Anaysis;
   onSliceSelection?: (start: number, end: number) => void;
+  onGenreSelection?: (des: string) => void;
 };
-const WaveSelector = ({ url, analysis, onSliceSelection }: Props) => {
+const WaveSelector = ({
+  url,
+  analysis,
+  onSliceSelection,
+  onGenreSelection,
+}: Props) => {
   const [wavesurfer, setWavesurfer] = useState<WaveSurfer | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -109,6 +116,15 @@ const WaveSelector = ({ url, analysis, onSliceSelection }: Props) => {
 
   return (
     <Stack width={"80%"} ref={transitionClsRef}>
+      <Box display={"flex"} justifyContent="center" mb={2}>
+        <TextField
+          label="Custom Prompt"
+          sx={{ width: 500 }}
+          onChange={(e) => {
+            if (onGenreSelection) onGenreSelection(e.target.value);
+          }}
+        />
+      </Box>
       <Typography sx={{ my: 2 }} variant="h6">
         Select a section to Remix (max 30s)
       </Typography>

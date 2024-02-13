@@ -1,7 +1,13 @@
 import {
   Box,
   Button,
+  Checkbox,
   CircularProgress,
+  Divider,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   TextField,
   Typography,
 } from "@mui/material";
@@ -74,6 +80,8 @@ function App() {
   const [longerRemixBlob, setLongerRemixBlob] = useState<Blob>();
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/instrumental.wav?alt=media"
   const [showWaveSelector, setShowWaveSelector] = useState(false);
+  const [skipShortClips, setSkipShortClips] = useState(false);
+  const [noOfShortClips, setNoOfShortClips] = useState(5);
   const [newAudio, setNewAudio] = useState<string>();
   const [longerAudioLoading, setLongerAudioLoading] = useState<boolean>(false);
   const [allin1Analysis, setAllIn1Analysis] = useState<Allin1Anaysis>();
@@ -208,9 +216,10 @@ function App() {
     setLoadingVid(false);
     const obj = {
       msg: "generate_short",
-      descriptions: genreNames.slice(0, 5),
-      durations: Array(5).fill(1),
+      descriptions: genreNames.slice(0, noOfShortClips),
+      durations: Array(noOfShortClips).fill(1),
       vid,
+      skip: skipShortClips,
     };
     sendJsonMessage(obj);
   };
@@ -333,6 +342,9 @@ function App() {
         } else if (!melodyUrl) {
           const blob = new Blob([data], { type: "audio/wav" });
           setMelodyUrl(URL.createObjectURL(blob));
+          if (skipShortClips) {
+            setShowWaveSelector(true);
+          }
         } else {
           const blob = new Blob([data], { type: "audio/wav" });
           setNewAudio(URL.createObjectURL(blob));
@@ -396,66 +408,97 @@ function App() {
             <Typography variant="h3" align="center" textTransform={"uppercase"}>
               Remix any Song with NUMIX
             </Typography>
-          </motion.div>
-          <Box
-            mt={10}
-            width="100%"
-            display={"flex"}
-            justifyContent="center"
-            flexWrap={"wrap"}
-            gap={2}
-          >
             <Box
-              flexBasis={{ xs: "100%", md: "63%" }}
-              display="flex"
-              alignItems={"center"}
+              mt={10}
+              width="100%"
+              display={"flex"}
+              justifyContent="center"
+              flexWrap={"wrap"}
+              gap={2}
             >
-              <TextField
-                fullWidth
-                disabled={!!vid}
-                sx={{
-                  ".MuiInputBase-root": {
-                    borderRadius: "8px",
-                  },
-                  ".MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#929292",
-                  },
-                }}
-                label="Youtube Link"
-                color="secondary"
-                value={youtubeLink}
-                onChange={(e) => {
-                  if (!loadingVid) setYoutubeLink(e.target.value);
-                }}
-                InputProps={{
-                  endAdornment: (
-                    <Button
-                      onClick={getVidFromYtbLink}
-                      sx={{
-                        background:
-                          "linear-gradient(90deg, rgba(84,50,255,1) 0%, rgba(237,50,255,1) 100%)",
-                      }}
-                    >
-                      {loadingVid ? (
-                        <CircularProgress color="secondary" size={"24px"} />
-                      ) : (
-                        <ArrowForwardIcon color="secondary" />
-                      )}
-                    </Button>
-                  ),
-                }}
-              />
+              <Box
+                flexBasis={{ xs: "100%", md: "63%" }}
+                display="flex"
+                alignItems={"center"}
+              >
+                <TextField
+                  fullWidth
+                  disabled={!!vid}
+                  sx={{
+                    ".MuiInputBase-root": {
+                      borderRadius: "8px",
+                    },
+                    ".MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#929292",
+                    },
+                  }}
+                  label="Youtube Link"
+                  color="secondary"
+                  value={youtubeLink}
+                  onChange={(e) => {
+                    if (!loadingVid) setYoutubeLink(e.target.value);
+                  }}
+                  InputProps={{
+                    endAdornment: (
+                      <Button
+                        onClick={getVidFromYtbLink}
+                        sx={{
+                          background:
+                            "linear-gradient(90deg, rgba(84,50,255,1) 0%, rgba(237,50,255,1) 100%)",
+                        }}
+                      >
+                        {loadingVid ? (
+                          <CircularProgress color="secondary" size={"24px"} />
+                        ) : (
+                          <ArrowForwardIcon color="secondary" />
+                        )}
+                      </Button>
+                    ),
+                  }}
+                />
+              </Box>
+              <Box flexBasis={{ xs: "100%", md: "34%" }}>
+                <Uploader
+                  onDrop={onDropMusicUpload}
+                  melodyFile={melodyFile}
+                  initializeTone={initializeTone}
+                  playAudio={() => {}}
+                  vid={vid}
+                />
+              </Box>
             </Box>
-            <Box flexBasis={{ xs: "100%", md: "34%" }}>
-              <Uploader
-                onDrop={onDropMusicUpload}
-                melodyFile={melodyFile}
-                initializeTone={initializeTone}
-                playAudio={() => {}}
-                vid={vid}
+            <Box display={"flex"} alignItems="center" my={2} mx={1} gap={2}>
+              <Box display={"flex"} alignItems="center">
+                <Select
+                  disabled={skipShortClips}
+                  value={noOfShortClips}
+                  onChange={(e) => setNoOfShortClips(e.target.value as number)}
+                  size="small"
+                >
+                  <MenuItem value={1}>1</MenuItem>
+                  <MenuItem value={2}>2</MenuItem>
+                  <MenuItem value={4}>4</MenuItem>
+                  <MenuItem value={5}>5</MenuItem>
+                  <MenuItem value={8}>8</MenuItem>
+                  <MenuItem value={10}>10</MenuItem>
+                </Select>
+                <Typography ml={1}>No of 1s samples</Typography>
+              </Box>
+              <Divider
+                orientation="vertical"
+                flexItem
+                sx={{ backgroundColor: "gray", ml: 1 }}
               />
+              <Box display={"flex"} alignItems="center">
+                <Checkbox
+                  checked={skipShortClips}
+                  onChange={(e, checked) => setSkipShortClips(checked)}
+                />
+                <Typography>Skip 1s samples</Typography>
+              </Box>
             </Box>
-          </Box>
+          </motion.div>
+
           {vid && !showWaveSelector && (
             <Box mt={4} width="100%">
               <Box mt={4} width="100%" display={"flex"} justifyContent="center">
@@ -472,15 +515,24 @@ function App() {
             </Box>
           )}
           {/* showWaveSelector && */}
-          {melodyUrl && showWaveSelector && !longerRemixUrl && (
-            <Box mt={10} width="100%" display={"flex"} justifyContent="center">
-              <WaveSelector
-                url={melodyUrl}
-                analysis={allin1Analysis}
-                onSliceSelection={onSliceSelection}
-              />
-            </Box>
-          )}
+          {melodyUrl &&
+            showWaveSelector &&
+            !longerRemixUrl &&
+            allin1Analysis && (
+              <Box
+                mt={10}
+                width="100%"
+                display={"flex"}
+                justifyContent="center"
+              >
+                <WaveSelector
+                  url={melodyUrl}
+                  analysis={allin1Analysis}
+                  onSliceSelection={onSliceSelection}
+                  onGenreSelection={onGenreSelection}
+                />
+              </Box>
+            )}
           {longerRemixUrl && vocalsUrl && (
             <Box mt={4} width="100%" display={"flex"} justifyContent="center">
               {/* <MultiWaveform
@@ -498,7 +550,7 @@ function App() {
               />
             </Box>
           )}
-          {newAudio && !longerRemixUrl && allin1Analysis && (
+          {!longerRemixUrl && melodyUrl && (
             <Box mt={4} display={"flex"} justifyContent="center">
               <LoadingButton
                 loading={longerAudioLoading}
