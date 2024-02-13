@@ -193,7 +193,7 @@ function App() {
       });
       setLongerAudioLoading(true);
     } else {
-      stopPlayer();
+      // stopPlayer();
       setShowWaveSelector(true);
     }
   };
@@ -227,9 +227,7 @@ function App() {
     flangerGain,
   }: FX_PARAMS) => {
     if (vocalsBlob && longerRemixBlob) {
-      await uploadFromAudioBlob(`${vid}/instr.wav`, longerRemixBlob);
-      await uploadFromAudioBlob(`${vid}/vocals.wav`, vocalsBlob);
-      await createWrapperDoc({
+      const id = await createWrapperDoc({
         vid,
         genre: sectionInfo?.description ?? "",
         title: musicInfo?.title ?? "",
@@ -244,6 +242,8 @@ function App() {
         reverbGain,
         flangerGain,
       });
+      await uploadFromAudioBlob(`${id}/instr.wav`, longerRemixBlob);
+      await uploadFromAudioBlob(`${id}/vocals.wav`, vocalsBlob);
       const formdata = new FormData();
       formdata.append("vocals", vocalsBlob);
       formdata.append("instrumental", longerRemixBlob);
@@ -451,7 +451,7 @@ function App() {
                 onDrop={onDropMusicUpload}
                 melodyFile={melodyFile}
                 initializeTone={initializeTone}
-                playAudio={playAudio}
+                playAudio={() => {}}
                 vid={vid}
               />
             </Box>

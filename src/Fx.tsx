@@ -1,6 +1,9 @@
 import { Box } from "@mui/system";
 import AudioComponent from "./components/AudioComponent";
-import { useCollectionDataOnce } from "react-firebase-hooks/firestore";
+import {
+  // useCollectionDataOnce,
+  useCollectionOnce,
+} from "react-firebase-hooks/firestore";
 import { collection, query } from "firebase/firestore";
 import { db } from "./services/firebase.service";
 import { Chip } from "@mui/material";
@@ -10,14 +13,20 @@ const numixsRef = collection(db, "wrapper");
 
 const Fx = () => {
   const [vid, setVid] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState("");
   const [musicInfo, setMusicInfo] = useState<{ title: string; tag: string }>();
   const [instrumentalUrl, setInstrumentalUrl] = useState("");
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/instrumental.wav?alt=media"
   const [vocalsUrl, setVocalsUrl] = useState("");
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/vocals.wav?alt=media"
-  const [values] = useCollectionDataOnce(query(numixsRef));
-  const onWrapSelected = async (_vid: string) => {
+  // const [values] = useCollectionDataOnce(query(numixsRef));
+  const [snaps] = useCollectionOnce(query(numixsRef));
+
+  const onWrapSelected = async (v: any) => {
+    const _vid = v.vid;
     setVid(_vid);
+    setMusicInfo({ title: v.title, tag: v.tag });
+    setSelectedGenre(v.genre);
 
     setInstrumentalUrl(
       `https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/wrapper%2F${_vid}%2Finstr.wav?alt=media`
@@ -30,24 +39,34 @@ const Fx = () => {
   return (
     <Box>
       <Box display={"flex"} gap={2} flexWrap="wrap">
-        {values?.map((v) => (
-          <Chip
-            color="secondary"
-            key={v.vid}
-            label={v.title}
-            clickable
-            onClick={() => {
-              setMusicInfo({ title: v.title, tag: v.tag });
-              onWrapSelected(v.vid);
-            }}
-          />
-        ))}
+        {snaps?.docs?.map((d) => {
+          const v = d.data();
+          return (
+            <Chip
+              color="secondary"
+              key={d.id}
+              label={v.title}
+              clickable
+              onClick={() => {
+                if (vid) {
+                  setInstrumentalUrl("");
+                  setVocalsUrl("");
+                  setTimeout(() => {
+                    onWrapSelected(v);
+                  }, 100);
+                  return;
+                }
+                onWrapSelected(v);
+              }}
+            />
+          );
+        })}
       </Box>
-      {instrumentalUrl && vocalsUrl && (
+      {!!instrumentalUrl && !!vocalsUrl && (
         <AudioComponent
           onFinish={() => {}}
           vid={vid}
-          selectedGenre="Future Bass"
+          selectedGenre={selectedGenre}
           instrumentalUrl={instrumentalUrl}
           vocalsUrl={vocalsUrl}
           musicInfo={musicInfo}
