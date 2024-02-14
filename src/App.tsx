@@ -74,11 +74,13 @@ function App() {
   const [melodyUrl, setMelodyUrl] = useState<string>();
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/arr.wav?alt=media"
   const [vocalsUrl, setVocalsUrl] = useState<string>();
-  const [vocalsBlob, setVocalsBlob] = useState<Blob>();
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/vocals.wav?alt=media"
+  const [vocalsBlob, setVocalsBlob] = useState<Blob>();
+
   const [longerRemixUrl, setLongerRemixUrl] = useState<string>();
-  const [longerRemixBlob, setLongerRemixBlob] = useState<Blob>();
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/instrumental.wav?alt=media"
+  const [longerRemixBlob, setLongerRemixBlob] = useState<Blob>();
+
   const [showWaveSelector, setShowWaveSelector] = useState(false);
   const [skipShortClips, setSkipShortClips] = useState(false);
   const [noOfShortClips, setNoOfShortClips] = useState(5);
@@ -186,6 +188,10 @@ function App() {
 
   const onGenerate = async () => {
     if (showWaveSelector && vid) {
+      if (!sectionInfo?.description) {
+        alert("Prompt is not provided");
+        return;
+      }
       // setVocalsUrl(
       //   "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/vocals.wav?alt=media"
       // );
@@ -530,6 +536,7 @@ function App() {
                   analysis={allin1Analysis}
                   onSliceSelection={onSliceSelection}
                   onGenreSelection={onGenreSelection}
+                  genre={sectionInfo?.description ?? ""}
                 />
               </Box>
             )}
@@ -547,10 +554,14 @@ function App() {
                 selectedGenre={sectionInfo?.description ?? "Error"}
                 onFinish={onFinish}
                 musicInfo={musicInfo}
+                onBack={() => {
+                  setLongerRemixUrl("");
+                  setVocalsUrl("");
+                }}
               />
             </Box>
           )}
-          {!longerRemixUrl && melodyUrl && (
+          {!longerRemixUrl && melodyUrl && !showWaveSelector && (
             <Box mt={4} display={"flex"} justifyContent="center">
               <LoadingButton
                 loading={longerAudioLoading}
@@ -558,12 +569,25 @@ function App() {
                 color={allin1Analysis ? "primary" : "info"}
                 onClick={onGenerate}
               >
-                {showWaveSelector
-                  ? "Generate"
-                  : `Section with ${sectionInfo?.description}`}
+                Section with {sectionInfo?.description}
               </LoadingButton>
             </Box>
           )}
+          {!longerRemixUrl &&
+            melodyUrl &&
+            showWaveSelector &&
+            allin1Analysis && (
+              <Box mt={4} display={"flex"} justifyContent="center">
+                <LoadingButton
+                  loading={longerAudioLoading}
+                  variant={allin1Analysis ? "contained" : "outlined"}
+                  color={allin1Analysis ? "primary" : "info"}
+                  onClick={onGenerate}
+                >
+                  Generate
+                </LoadingButton>
+              </Box>
+            )}
         </motion.div>
       </Box>
     </Box>

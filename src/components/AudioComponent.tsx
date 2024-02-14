@@ -22,6 +22,7 @@ import { useWavesurfer } from "../hooks/useWavesurfer";
 // import wavesUI from "waves-ui";
 import PowerSettingsNewOutlinedIcon from "@mui/icons-material/PowerSettingsNewOutlined";
 import { FX_PARAMS } from "../App";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 const sliderSize = {
   height: "14px",
@@ -39,6 +40,7 @@ const AudioComponent = ({
   onFinish,
   musicInfo,
   initialProps,
+  onBack,
 }: {
   vocalsUrl: string;
   instrumentalUrl: string;
@@ -47,6 +49,7 @@ const AudioComponent = ({
   onFinish: (params: FX_PARAMS) => void;
   initialProps?: FX_PARAMS;
   musicInfo?: { title: string; tag: string };
+  onBack: () => void;
 }) => {
   const containerRef = useRef(null);
   //   const [currentTime, setCurrentTime] = useState(0);
@@ -279,6 +282,11 @@ const AudioComponent = ({
       height="100vh"
       p={4}
     >
+      <Box display={"flex"} justifyContent="end" px={4} mb={2}>
+        <IconButton onClick={onBack}>
+          <ArrowBackIcon />
+        </IconButton>
+      </Box>
       <Stack sx={{ backgroundColor: "#242424" }} p={4} borderRadius="58px">
         <Box
           display={"flex"}

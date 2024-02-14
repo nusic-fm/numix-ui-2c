@@ -38,12 +38,14 @@ type Props = {
   analysis?: Allin1Anaysis;
   onSliceSelection?: (start: number, end: number) => void;
   onGenreSelection?: (des: string) => void;
+  genre: string;
 };
 const WaveSelector = ({
   url,
   analysis,
   onSliceSelection,
   onGenreSelection,
+  genre,
 }: Props) => {
   const [wavesurfer, setWavesurfer] = useState<WaveSurfer | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -120,6 +122,7 @@ const WaveSelector = ({
         <TextField
           label="Custom Prompt"
           sx={{ width: 500 }}
+          value={genre}
           onChange={(e) => {
             if (onGenreSelection) onGenreSelection(e.target.value);
           }}
