@@ -207,7 +207,7 @@ function App() {
       });
       setLongerAudioLoading(true);
     } else {
-      // stopPlayer();
+      stopPlayer();
       setShowWaveSelector(true);
     }
   };
