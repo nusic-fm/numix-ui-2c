@@ -399,7 +399,12 @@ function App() {
         p={2}
         justifyContent="space-between"
       >
-        <img src="numix.png" alt="" width={140} />
+        <img
+          src="numix.png"
+          alt=""
+          width={140}
+          onClick={() => (window as any).navigation?.reload()}
+        />
         <Typography onClick={() => navigate("/fx")}>
           {readyStateString} - {isReady ? "Model Ready" : "Model Not Ready"}
         </Typography>
@@ -561,18 +566,21 @@ function App() {
               />
             </Box>
           )}
-          {!longerRemixUrl && melodyUrl && !showWaveSelector && (
-            <Box mt={4} display={"flex"} justifyContent="center">
-              <LoadingButton
-                loading={longerAudioLoading}
-                variant={allin1Analysis ? "contained" : "outlined"}
-                color={allin1Analysis ? "primary" : "info"}
-                onClick={onGenerate}
-              >
-                Section with {sectionInfo?.description}
-              </LoadingButton>
-            </Box>
-          )}
+          {!longerRemixUrl &&
+            melodyUrl &&
+            !showWaveSelector &&
+            newAudio &&
+            allin1Analysis && (
+              <Box mt={4} display={"flex"} justifyContent="center">
+                <LoadingButton
+                  variant={"contained"}
+                  color={"primary"}
+                  onClick={onGenerate}
+                >
+                  Section with {sectionInfo?.description}
+                </LoadingButton>
+              </Box>
+            )}
           {!longerRemixUrl &&
             melodyUrl &&
             showWaveSelector &&
