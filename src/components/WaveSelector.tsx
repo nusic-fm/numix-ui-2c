@@ -4,6 +4,7 @@ import {
   // Button,
   Checkbox,
   Chip,
+  Fab,
   FormControlLabel,
   FormGroup,
   IconButton,
@@ -198,47 +199,38 @@ const WaveSelector = ({
             Play Selected section
           </Button> */}
           {analysis &&
-            analysis.segments.map((seg, i) => (
-              // <Chip
-              //   key={seg.start}
-              //   clickable
-              //   label={`${seg.start}-${seg.end}s`}
-              //   color="secondary"
-              //   onClick={() => {
-              //     regionsWs.current
-              //       ?.getRegions()[0]
-              //       .setOptions({ start: seg.start, end: seg.end });
-              //     regionsWs.current?.getRegions()[0].play();
-              //     if (onSliceSelection) onSliceSelection(seg.start, seg.end);
-              //   }}
-              // />
-              <Stack
-                key={seg.start}
-                sx={{ bgcolor: "#E0E0E0", color: "black" }}
-                borderRadius="20px"
-                p={2}
-                width={140}
-                height={100}
-                position="relative"
-              >
-                <Box
-                  position={"absolute"}
-                  top={0}
-                  left={0}
-                  width="100%"
-                  height="100%"
-                  display={"flex"}
-                  alignItems="center"
-                  justifyContent={"center"}
-                >
-                  <img src="wave.svg" alt="" width={40} />
-                </Box>
-                <Box
-                  display={"flex"}
-                  justifyContent="space-between"
-                  alignItems={"center"}
+            analysis.segments
+              .filter((s) => s.end - s.start > 1)
+              .map((seg, i) => (
+                // <Chip
+                //   key={seg.start}
+                //   clickable
+                //   label={`${seg.start}-${seg.end}s`}
+                //   color="secondary"
+                //   onClick={() => {
+                //     regionsWs.current
+                //       ?.getRegions()[0]
+                //       .setOptions({ start: seg.start, end: seg.end });
+                //     regionsWs.current?.getRegions()[0].play();
+                //     if (onSliceSelection) onSliceSelection(seg.start, seg.end);
+                //   }}
+                // />
+                <Stack
+                  key={seg.start}
+                  sx={{ bgcolor: "#E0E0E0", color: "black" }}
+                  borderRadius="20px"
+                  p={1}
+                  width={140}
+                  // height={100}
+                  position="relative"
                 >
                   <Box
+                    display={"flex"}
+                    justifyContent="space-between"
+                    alignItems={"center"}
+                  >
+                    <Fab sx={{ width: 35, height: 35 }}>{i + 1}</Fab>
+                    {/* <Box
                     width={5}
                     height={5}
                     boxShadow={"0px 4px 7.7px 0px rgba(0,0,0,0.25%)"}
@@ -250,37 +242,43 @@ const WaveSelector = ({
                     justifyContent={"center"}
                   >
                     {i + 1}
+                  </Box> */}
+                    <img src="wave.svg" alt="" width={40} />
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        regionsWs.current
+                          ?.getRegions()[0]
+                          .setOptions({ start: seg.start, end: seg.end });
+                        regionsWs.current?.getRegions()[0].play();
+                        if (onSliceSelection)
+                          onSliceSelection(seg.start, seg.end);
+                      }}
+                      sx={{
+                        background: "#403478",
+                        borderRadius: "9px",
+                        width: 35,
+                        height: 35,
+                      }}
+                    >
+                      <PlayArrowRounded />
+                    </IconButton>
                   </Box>
-                  <IconButton
-                    size="small"
-                    onClick={() => {
-                      regionsWs.current
-                        ?.getRegions()[0]
-                        .setOptions({ start: seg.start, end: seg.end });
-                      regionsWs.current?.getRegions()[0].play();
-                      if (onSliceSelection)
-                        onSliceSelection(seg.start, seg.end);
-                    }}
-                    sx={{ background: "#403478", borderRadius: "9px" }}
+                  <Box
+                    display={"flex"}
+                    justifyContent="space-between"
+                    alignItems={"center"}
+                    mt={1}
                   >
-                    <PlayArrowRounded />
-                  </IconButton>
-                </Box>
-                <Box
-                  display={"flex"}
-                  justifyContent="space-between"
-                  alignItems={"center"}
-                  mt={"auto"}
-                >
-                  <Typography color={"#979797"} fontSize="14px">
-                    {(seg.end - seg.start).toFixed(0)}s
-                  </Typography>
-                  <Typography color={"#979797"} fontSize="14px">
-                    {seg.start.toFixed(0)}-{seg.end.toFixed(0)}
-                  </Typography>
-                </Box>
-              </Stack>
-            ))}
+                    <Typography color={"#000"} fontSize="14px" pl={1}>
+                      {(seg.end - seg.start).toFixed(0)}s
+                    </Typography>
+                    <Typography color={"#000"} fontSize="14px">
+                      {seg.start.toFixed(0)}s-{seg.end.toFixed(0)}s
+                    </Typography>
+                  </Box>
+                </Stack>
+              ))}
         </Box>
       )}
     </Stack>
