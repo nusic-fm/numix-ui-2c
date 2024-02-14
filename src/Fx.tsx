@@ -70,6 +70,10 @@ const Fx = () => {
           instrumentalUrl={instrumentalUrl}
           vocalsUrl={vocalsUrl}
           musicInfo={musicInfo}
+          onBack={() => {
+            setInstrumentalUrl("");
+            setVocalsUrl("");
+          }}
         />
       )}
     </Box>
