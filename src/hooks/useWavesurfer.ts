@@ -7,7 +7,7 @@ export const useWavesurfer = (containerRef: any, audioUrl: string) => {
   // Initialize wavesurfer when the container mounts
   // or any of the props change
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !audioUrl) return;
 
     const ctx = document.createElement("canvas").getContext("2d") as any;
     const gradient = ctx.createLinearGradient(0, 0, 0, 150);
@@ -34,7 +34,7 @@ export const useWavesurfer = (containerRef: any, audioUrl: string) => {
     return () => {
       ws.destroy();
     };
-  }, [containerRef]);
+  }, [containerRef, audioUrl]);
 
   return wavesurfer;
 };

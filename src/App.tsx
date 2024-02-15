@@ -204,6 +204,7 @@ function App() {
         start: sectionStartEnd?.start,
         end: sectionStartEnd?.end,
         description: sectionInfo?.description,
+        vid,
       });
       setLongerAudioLoading(true);
     } else {
@@ -341,7 +342,8 @@ function App() {
           setLongerRemixUrl(URL.createObjectURL(blob));
           setLongerRemixBlob(blob);
           setLongerAudioLoading(false);
-        } else if (longerRemixUrl && !vocalsUrl) {
+          // } else if (longerRemixUrl && !vocalsUrl) {
+        } else if (allin1Analysis && !vocalsUrl) {
           const blob = new Blob([data], { type: "audio/wav" });
           setVocalsUrl(URL.createObjectURL(blob));
           setVocalsBlob(blob);
@@ -529,6 +531,7 @@ function App() {
           {melodyUrl &&
             showWaveSelector &&
             !longerRemixUrl &&
+            !longerAudioLoading &&
             allin1Analysis && (
               <Box
                 mt={10}
@@ -545,13 +548,19 @@ function App() {
                 />
               </Box>
             )}
-          {longerRemixUrl && vocalsUrl && (
+          {/* <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => {
+              setLongerRemixUrl(
+                "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/instrumental.wav?alt=media"
+              );
+            }}
+          >
+            Load
+          </Button> */}
+          {(longerRemixUrl || longerAudioLoading) && vocalsUrl && (
             <Box mt={4} width="100%" display={"flex"} justifyContent="center">
-              {/* <MultiWaveform
-              vocalsUrl={vocalsUrl}
-              remixUrl={longerRemixUrl}
-              bpm={allin1Analysis?.bpm}
-            /> */}
               <AudioComponent
                 instrumentalUrl={longerRemixUrl}
                 vocalsUrl={vocalsUrl}

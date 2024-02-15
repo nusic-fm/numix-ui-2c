@@ -9,6 +9,7 @@ import {
   Divider,
   Fab,
   IconButton,
+  Skeleton,
   Slider,
   Stack,
   Typography,
@@ -43,7 +44,7 @@ const AudioComponent = ({
   onBack,
 }: {
   vocalsUrl: string;
-  instrumentalUrl: string;
+  instrumentalUrl?: string;
   selectedGenre: string;
   vid: string;
   onFinish: (params: FX_PARAMS) => void;
@@ -53,7 +54,7 @@ const AudioComponent = ({
 }) => {
   const containerRef = useRef(null);
   //   const [currentTime, setCurrentTime] = useState(0);
-  const wavesurfer = useWavesurfer(containerRef, instrumentalUrl);
+  const wavesurfer = useWavesurfer(containerRef, instrumentalUrl ?? "");
   const [audioContext, setAudioContext] = useState<any>(
     wavesAudio.audioContext
   );
@@ -95,7 +96,7 @@ const AudioComponent = ({
 
   useEffect(() => {
     const intervalForCursor = setInterval(() => {
-      if (wavesurfer && instrPlayControlRef.current) {
+      if (wavesurfer && instrPlayControlRef.current && instrumentalUrl) {
         const currentPosition = instrPlayControlRef.current.currentPosition;
 
         wavesurfer?.setTime(currentPosition);
@@ -178,6 +179,34 @@ const AudioComponent = ({
     return { flangerDelayNode, flangerGainNode };
   };
 
+  const initInstr = async () => {
+    const instrBuffer = await loader.load(instrumentalUrl);
+
+    // Instrumental Setup
+    const [instrPlayerEngine, instrPhaseVocoderNode, instrGainNode] =
+      await setupEngine(instrBuffer);
+    const instrPlayControl = new wavesAudio.PlayControl(instrPlayerEngine);
+    instrPlayControl.setLoopBoundaries(0, instrBuffer.duration);
+    instrPlayControl.loop = true;
+    setInstrDurationInSec(instrBuffer.duration);
+
+    instrGainNode.connect(audioContext.destination);
+
+    instrGainNodeRef.current = instrGainNode;
+    instrPlayControlRef.current = instrPlayControl;
+    instrPhaseVocoderNodeRef.current = instrPhaseVocoderNode;
+    if (isPlaying) {
+      instrPlayControl.seek(vocalPlayControlRef.current.currentPosition);
+      instrPlayControl.start();
+    }
+  };
+
+  useEffect(() => {
+    if (instrumentalUrl) {
+      initInstr();
+    }
+  }, [instrumentalUrl]);
+
   useEffect(() => {
     const init = async () => {
       if (audioContext.audioWorklet === undefined) {
@@ -185,20 +214,12 @@ const AudioComponent = ({
         return;
       }
       const vocalBuffer = await loader.load(vocalsUrl);
-      const instrBuffer = await loader.load(instrumentalUrl);
       // Vocals Setup
       const [vocalPlayerEngine, vocalPhaseVocoderNode, vocalGainNode] =
         await setupEngine(vocalBuffer);
       const vocalPlayControl = new wavesAudio.PlayControl(vocalPlayerEngine);
       vocalPlayControl.setLoopBoundaries(0, vocalBuffer.duration);
       vocalPlayControl.loop = true;
-      // Instrumental Setup
-      const [instrPlayerEngine, instrPhaseVocoderNode, instrGainNode] =
-        await setupEngine(instrBuffer);
-      const instrPlayControl = new wavesAudio.PlayControl(instrPlayerEngine);
-      instrPlayControl.setLoopBoundaries(0, instrBuffer.duration);
-      instrPlayControl.loop = true;
-      setInstrDurationInSec(instrBuffer.duration);
 
       const { delayNode, delayGainNode } = setupDelay(audioContext);
       const reverbBuffer = await loader.load("./rir.wav");
@@ -209,7 +230,6 @@ const AudioComponent = ({
       const { flangerDelayNode, flangerGainNode } = setupFlanger(audioContext);
 
       vocalGainNode.connect(audioContext.destination);
-      instrGainNode.connect(audioContext.destination);
 
       vocalGainNode.connect(delayNode);
       delayGainNode.connect(audioContext.destination);
@@ -221,9 +241,6 @@ const AudioComponent = ({
       vocalsGainNodeRef.current = vocalGainNode;
       vocalPlayControlRef.current = vocalPlayControl;
       vocalPhaseVocoderNodeRef.current = vocalPhaseVocoderNode;
-      instrGainNodeRef.current = instrGainNode;
-      instrPlayControlRef.current = instrPlayControl;
-      instrPhaseVocoderNodeRef.current = instrPhaseVocoderNode;
       delayGainNodeRef.current = delayGainNode;
       reverbGainNodeRef.current = reverbGainNode;
       flangerGainNodeRef.current = flangerGainNode;
@@ -351,19 +368,31 @@ const AudioComponent = ({
               )}
             </Fab>
           </Box>
-          <div ref={containerRef} style={{ width: "60%" }}></div>
+          {instrumentalUrl ? (
+            <div ref={containerRef} style={{ width: "60%" }}></div>
+          ) : (
+            <Skeleton
+              width={"60%"}
+              height="40px"
+              variant="rounded"
+              animation="wave"
+            />
+          )}
+
           <Typography variant="caption">
             00:{instrDurationInSec.toFixed(0)}
           </Typography>
           <IconButton
             sx={{ ml: "auto" }}
             onClick={() => {
-              const a = document.createElement("a");
-              a.href = instrumentalUrl;
-              a.setAttribute("download", "instr.wav");
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
+              if (instrumentalUrl) {
+                const a = document.createElement("a");
+                a.href = instrumentalUrl;
+                a.setAttribute("download", "instr.wav");
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+              }
               const b = document.createElement("a");
               b.href = vocalsUrl;
               b.setAttribute("download", "vocals.wav");
@@ -416,6 +445,7 @@ const AudioComponent = ({
           <Stack width={200} flexBasis="50%">
             <Typography gutterBottom>Speed</Typography>
             <Slider
+              disabled={!instrumentalUrl}
               sx={sliderSize}
               color="info"
               valueLabelDisplay="auto"
@@ -459,6 +489,7 @@ const AudioComponent = ({
           <Stack width={200} flexBasis="50%">
             <Typography gutterBottom>Pitch</Typography>
             <Slider
+              disabled={!instrumentalUrl}
               sx={sliderSize}
               color="info"
               valueLabelDisplay="auto"
