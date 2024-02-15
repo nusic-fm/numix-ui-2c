@@ -73,6 +73,7 @@ function App() {
   const [melodyFile, setMelodyFile] = useState<File>();
   const [melodyUrl, setMelodyUrl] = useState<string>();
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/arr.wav?alt=media"
+  const [fullVocalsBlob, setFullVocalsBlob] = useState<Blob>();
   const [vocalsUrl, setVocalsUrl] = useState<string>();
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/vocals.wav?alt=media"
   const [vocalsBlob, setVocalsBlob] = useState<Blob>();
@@ -207,6 +208,23 @@ function App() {
         vid,
       });
       setLongerAudioLoading(true);
+      if (!fullVocalsBlob) return;
+      const formData = new FormData();
+      formData.append("audio", fullVocalsBlob);
+      formData.append("start", sectionStartEnd?.start.toString() ?? "1");
+      formData.append("end", sectionStartEnd?.end.toString() ?? "2");
+      try {
+        const res = await axios.post(
+          `${import.meta.env.VITE_AUDIO_ANALYSER_PY}/slice`,
+          formData,
+          { responseType: "blob" }
+        );
+        const blobData = res.data;
+        setVocalsUrl(URL.createObjectURL(blobData));
+        console.log("Sliced vocals");
+      } catch (e) {
+        debugger;
+      }
     } else {
       stopPlayer();
       setShowWaveSelector(true);
@@ -342,10 +360,12 @@ function App() {
           setLongerRemixUrl(URL.createObjectURL(blob));
           setLongerRemixBlob(blob);
           setLongerAudioLoading(false);
-          // } else if (longerRemixUrl && !vocalsUrl) {
-        } else if (allin1Analysis && !vocalsUrl) {
+        } else if (allin1Analysis && !fullVocalsBlob) {
           const blob = new Blob([data], { type: "audio/wav" });
-          setVocalsUrl(URL.createObjectURL(blob));
+          setFullVocalsBlob(blob);
+        } else if (longerRemixUrl && !vocalsUrl) {
+          const blob = new Blob([data], { type: "audio/wav" });
+          // setVocalsUrl(URL.createObjectURL(blob));
           setVocalsBlob(blob);
         } else if (!melodyUrl) {
           const blob = new Blob([data], { type: "audio/wav" });
