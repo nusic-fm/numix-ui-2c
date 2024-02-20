@@ -40,6 +40,7 @@ type Props = {
   onSliceSelection?: (start: number, end: number) => void;
   onGenreSelection?: (des: string) => void;
   genre: string;
+  onModelPropsChange: (url?: string, name?: string) => void;
 };
 const WaveSelector = ({
   url,
@@ -47,6 +48,7 @@ const WaveSelector = ({
   onSliceSelection,
   onGenreSelection,
   genre,
+  onModelPropsChange,
 }: Props) => {
   const [wavesurfer, setWavesurfer] = useState<WaveSurfer | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -121,12 +123,35 @@ const WaveSelector = ({
     <Stack width={"80%"} ref={transitionClsRef}>
       <Box display={"flex"} justifyContent="center" mb={2}>
         <TextField
+          fullWidth
           label="Custom Prompt"
-          sx={{ width: 500 }}
+          // sx={{ width: 500 }}
           value={genre}
           onChange={(e) => {
             if (onGenreSelection) onGenreSelection(e.target.value);
           }}
+        />
+      </Box>
+      <Box display={"flex"} justifyContent="center" mb={2}>
+        <TextField
+          label="Model Download Url"
+          sx={{ width: 500 }}
+          onChange={(e) => {
+            onModelPropsChange(e.target.value);
+            // setVoiceModelProps((prevProp) => ({
+            //   ...prevProp,
+            //   url: e.target.value,
+            // }));
+          }}
+          size="small"
+        />
+        <TextField
+          label="Model Name"
+          // sx={{ width: 500 }}
+          onChange={(e) => {
+            onModelPropsChange(undefined, e.target.value);
+          }}
+          size="small"
         />
       </Box>
       <Typography sx={{ my: 2 }} variant="h6">

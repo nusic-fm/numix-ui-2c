@@ -75,6 +75,8 @@ function App() {
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/arr.wav?alt=media"
   const [fullVocalsBlob, setFullVocalsBlob] = useState<Blob>();
   const [vocalsUrl, setVocalsUrl] = useState<string>();
+  const [convertedVocalsBlob, setConvertedVocalsBlob] = useState<string>();
+  const [convertedVocalsUrl, setConvertedVocalsUrl] = useState<string>();
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/vocals.wav?alt=media"
   const [vocalsBlob, setVocalsBlob] = useState<Blob>();
 
@@ -93,6 +95,10 @@ function App() {
   // )
   // https://www.youtube.com/watch?v=5z8TmIbyqwk
   const [loadingVid, setLoadingVid] = useState(false);
+  const [voiceModelProps, setVoiceModelProps] = useState<{
+    url?: string;
+    name?: string;
+  }>({});
 
   const navigate = useNavigate();
 
@@ -209,21 +215,40 @@ function App() {
       });
       setLongerAudioLoading(true);
       if (!fullVocalsBlob) return;
-      const formData = new FormData();
-      formData.append("audio", fullVocalsBlob);
-      formData.append("start", sectionStartEnd?.start.toString() ?? "1");
-      formData.append("end", sectionStartEnd?.end.toString() ?? "2");
+      const sliceFormData = new FormData();
+      sliceFormData.append("audio", fullVocalsBlob);
+      sliceFormData.append("start", sectionStartEnd?.start.toString() ?? "1");
+      sliceFormData.append("end", sectionStartEnd?.end.toString() ?? "2");
       try {
         const res = await axios.post(
           `${import.meta.env.VITE_AUDIO_ANALYSER_PY}/slice`,
-          formData,
+          sliceFormData,
           { responseType: "blob" }
         );
-        const blobData = res.data;
-        setVocalsUrl(URL.createObjectURL(blobData));
+        const slicedBlobData = res.data;
         console.log("Sliced vocals");
+        if (voiceModelProps.url || voiceModelProps.name) {
+          const modelFormData = new FormData();
+          modelFormData.append("file", slicedBlobData);
+          // modelFormData.append("ip", "35.184.8.220");
+          if (voiceModelProps.url)
+            modelFormData.append("model_url", voiceModelProps.url);
+          if (voiceModelProps.name)
+            modelFormData.append("model_name", voiceModelProps.name);
+          const voiceModelRes = await axios.post(
+            `${import.meta.env.VITE_AUDIO_ANALYSER_PY}/proxy-voice-cover`,
+            modelFormData,
+            { responseType: "blob" }
+          );
+          const convertedVoiceBlob = voiceModelRes.data;
+          setConvertedVocalsBlob(convertedVoiceBlob);
+          setConvertedVocalsUrl(URL.createObjectURL(convertedVoiceBlob));
+        } else {
+          setVocalsBlob(slicedBlobData);
+          setVocalsUrl(URL.createObjectURL(slicedBlobData));
+        }
       } catch (e) {
-        debugger;
+        console.error(e);
       }
     } else {
       stopPlayer();
@@ -565,6 +590,10 @@ function App() {
                   onSliceSelection={onSliceSelection}
                   onGenreSelection={onGenreSelection}
                   genre={sectionInfo?.description ?? ""}
+                  onModelPropsChange={(url?: string, name?: string) => {
+                    if (url) setVoiceModelProps({ ...voiceModelProps, url });
+                    if (name) setVoiceModelProps({ ...voiceModelProps, name });
+                  }}
                 />
               </Box>
             )}
@@ -579,22 +608,23 @@ function App() {
           >
             Load
           </Button> */}
-          {(longerRemixUrl || longerAudioLoading) && vocalsUrl && (
-            <Box mt={4} width="100%" display={"flex"} justifyContent="center">
-              <AudioComponent
-                instrumentalUrl={longerRemixUrl}
-                vocalsUrl={vocalsUrl}
-                vid={vid}
-                selectedGenre={sectionInfo?.description ?? "Error"}
-                onFinish={onFinish}
-                musicInfo={musicInfo}
-                onBack={() => {
-                  setLongerRemixUrl("");
-                  setVocalsUrl("");
-                }}
-              />
-            </Box>
-          )}
+          {(longerRemixUrl || longerAudioLoading) &&
+            (vocalsUrl || convertedVocalsUrl) && (
+              <Box mt={4} width="100%" display={"flex"} justifyContent="center">
+                <AudioComponent
+                  instrumentalUrl={longerRemixUrl}
+                  vocalsUrl={vocalsUrl ?? convertedVocalsUrl ?? ""} //TODO
+                  vid={vid}
+                  selectedGenre={sectionInfo?.description ?? "Error"}
+                  onFinish={onFinish}
+                  musicInfo={musicInfo}
+                  onBack={() => {
+                    setLongerRemixUrl("");
+                    setVocalsUrl("");
+                  }}
+                />
+              </Box>
+            )}
           {!longerRemixUrl &&
             melodyUrl &&
             !showWaveSelector &&
