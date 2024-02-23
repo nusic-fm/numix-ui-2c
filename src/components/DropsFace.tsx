@@ -53,9 +53,9 @@ const DropsFace = ({
       options={{
         size: 140,
         minSize: 20,
-        gutter: 40,
+        gutter: 25,
         provideProps: true,
-        numCols: 4,
+        numCols: 6,
         fringeWidth: 160,
         yRadius: 130,
         xRadius: 220,

@@ -379,7 +379,31 @@ const AudioComponent = ({
             </Fab>
           </Box>
           {instrumentalUrl ? (
-            <div ref={containerRef} style={{ width: "60%" }}></div>
+            <Box display={"flex"} width="100%" height={"100%"}>
+              <Box
+                sx={{ bgcolor: "rgba(0,0,0,0.7)" }}
+                height="60px"
+                width={"40%"}
+                display="flex"
+                alignItems={"center"}
+                justifyContent="center"
+                borderRadius={2}
+              >
+                <LockRoundedIcon />
+              </Box>
+              <div ref={containerRef} style={{ width: "20%" }}></div>
+              <Box
+                sx={{ bgcolor: "rgba(0,0,0,0.7)" }}
+                height="60px"
+                width={100}
+                display="flex"
+                alignItems={"center"}
+                justifyContent="center"
+                borderRadius={2}
+              >
+                <LockRoundedIcon />
+              </Box>
+            </Box>
           ) : (
             <Skeleton
               width={"60%"}
@@ -389,7 +413,7 @@ const AudioComponent = ({
             />
           )}
 
-          <Box
+          {/* <Box
             width={"calc(60% + 56px)"}
             position={"absolute"}
             height="100%"
@@ -409,7 +433,7 @@ const AudioComponent = ({
             >
               <LockRoundedIcon />
             </Box>
-          </Box>
+          </Box> */}
           <Typography variant="caption">
             00:{instrDurationInSec.toFixed(0)}
           </Typography>

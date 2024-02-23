@@ -231,7 +231,7 @@ function App() {
       modelFormData.append(
         "model_url",
         `https://firebasestorage.googleapis.com/v0/b/nusic-dao-website.appspot.com/o/${
-          (voiceCoverMap as any)[selectedArtist][1]
+          (voiceCoverMap as any)[selectedArtist][0]
         }.zip?alt=media`
       );
     }
@@ -571,9 +571,9 @@ function App() {
                     <Stack gap={2} alignItems="center">
                       <IconButton>
                         <img
-                          src={`https://firebasestorage.googleapis.com/v0/b/nusic-dao-website.appspot.com/o/voice_cover_pics%2F${
+                          src={`https://firebasestorage.googleapis.com/v0/b/nusic-dao-website.appspot.com/o/voice_cover_pics%2F${selectedArtist}.${
                             (voiceCoverMap as any)[selectedArtist][1]
-                          }.png?alt=media`}
+                          }?alt=media`}
                           alt=""
                           width={100}
                           height={100}
@@ -614,7 +614,7 @@ function App() {
                     vid={vid}
                     selectedGenre={sectionInfo?.description ?? "Error"}
                     onFinish={onFinish}
-                    musicInfo={musicInfo}
+                    musicInfo={{ title: selectedArtist, tag: "AI Cover" }}
                     onBack={() => {
                       setLongerRemixUrl("");
                       setVocalsUrl("");
