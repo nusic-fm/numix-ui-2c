@@ -24,6 +24,8 @@ import { useWavesurfer } from "../hooks/useWavesurfer";
 import PowerSettingsNewOutlinedIcon from "@mui/icons-material/PowerSettingsNewOutlined";
 import { FX_PARAMS } from "../App";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import VolumeUpRoundedIcon from "@mui/icons-material/VolumeUpRounded";
+import VolumeOffRoundedIcon from "@mui/icons-material/VolumeOffRounded";
 
 const sliderSize = {
   height: "14px",
@@ -82,6 +84,7 @@ const AudioComponent = ({
   const [noWorkletVisible, setNoWorkletVisible] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInstrMuted, setIsInstrMuted] = useState(false);
   const [instrDurationInSec, setInstrDurationInSec] = useState<number>(0);
 
   const vocalPlayControlRef = useRef<any>(null);
@@ -411,35 +414,54 @@ const AudioComponent = ({
           alignItems={"center"}
           justifyContent="space-between"
         >
-          <Chip label="Remix FX" />
-          <IconButton
-            color={warpBypassed ? "error" : "success"}
-            onClick={() => {
-              const newWarpBypassed = !warpBypassed;
-              if (newWarpBypassed) {
-                vocalPhaseVocoderNodeRef.current.parameters.get(
-                  "pitchFactor"
-                ).value = 1.0;
-                instrPhaseVocoderNodeRef.current.parameters.get(
-                  "pitchFactor"
-                ).value = 1.0;
-                vocalPlayControlRef.current.speed = 1.0;
-                instrPlayControlRef.current.speed = 1.0;
-              } else {
-                vocalPhaseVocoderNodeRef.current.parameters.get(
-                  "pitchFactor"
-                ).value = (pitchFactor * 1) / speedFactor;
-                instrPhaseVocoderNodeRef.current.parameters.get(
-                  "pitchFactor"
-                ).value = (pitchFactor * 1) / speedFactor;
-                vocalPlayControlRef.current.speed = speedFactor;
-                instrPlayControlRef.current.speed = speedFactor;
-              }
-              setWarpBypassed(newWarpBypassed);
-            }}
+          <Chip label="Intrument FX" />
+          <Box
+            display="flex"
+            alignItems={"center"}
+            justifyContent="space-between"
           >
-            <PowerSettingsNewOutlinedIcon />
-          </IconButton>
+            <IconButton
+              onClick={() => {
+                setIsInstrMuted(!isInstrMuted);
+                if (instrGainNodeRef.current)
+                  instrGainNodeRef.current.gain.value = isInstrMuted ? 1 : 0;
+              }}
+            >
+              {isInstrMuted ? (
+                <VolumeOffRoundedIcon fontSize="small" />
+              ) : (
+                <VolumeUpRoundedIcon fontSize="small" />
+              )}
+            </IconButton>
+            <IconButton
+              color={warpBypassed ? "error" : "success"}
+              onClick={() => {
+                const newWarpBypassed = !warpBypassed;
+                if (newWarpBypassed) {
+                  vocalPhaseVocoderNodeRef.current.parameters.get(
+                    "pitchFactor"
+                  ).value = 1.0;
+                  instrPhaseVocoderNodeRef.current.parameters.get(
+                    "pitchFactor"
+                  ).value = 1.0;
+                  vocalPlayControlRef.current.speed = 1.0;
+                  instrPlayControlRef.current.speed = 1.0;
+                } else {
+                  vocalPhaseVocoderNodeRef.current.parameters.get(
+                    "pitchFactor"
+                  ).value = (pitchFactor * 1) / speedFactor;
+                  instrPhaseVocoderNodeRef.current.parameters.get(
+                    "pitchFactor"
+                  ).value = (pitchFactor * 1) / speedFactor;
+                  vocalPlayControlRef.current.speed = speedFactor;
+                  instrPlayControlRef.current.speed = speedFactor;
+                }
+                setWarpBypassed(newWarpBypassed);
+              }}
+            >
+              <PowerSettingsNewOutlinedIcon />
+            </IconButton>
+          </Box>
         </Box>
         <Box display={"flex"} justifyContent="center" gap={2} my={2} px={2}>
           <Stack width={200} flexBasis="50%">

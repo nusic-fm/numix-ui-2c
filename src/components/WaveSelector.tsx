@@ -40,7 +40,6 @@ type Props = {
   onSliceSelection?: (start: number, end: number) => void;
   onGenreSelection?: (des: string) => void;
   genre: string;
-  onModelPropsChange: (url?: string, name?: string) => void;
 };
 const WaveSelector = ({
   url,
@@ -48,7 +47,6 @@ const WaveSelector = ({
   onSliceSelection,
   onGenreSelection,
   genre,
-  onModelPropsChange,
 }: Props) => {
   const [wavesurfer, setWavesurfer] = useState<WaveSurfer | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -132,28 +130,7 @@ const WaveSelector = ({
           }}
         />
       </Box>
-      <Box display={"flex"} justifyContent="center" mb={2}>
-        <TextField
-          label="Model Download Url"
-          sx={{ width: 500 }}
-          onChange={(e) => {
-            onModelPropsChange(e.target.value);
-            // setVoiceModelProps((prevProp) => ({
-            //   ...prevProp,
-            //   url: e.target.value,
-            // }));
-          }}
-          size="small"
-        />
-        <TextField
-          label="Model Name"
-          // sx={{ width: 500 }}
-          onChange={(e) => {
-            onModelPropsChange(undefined, e.target.value);
-          }}
-          size="small"
-        />
-      </Box>
+
       <Typography sx={{ my: 2 }} variant="h6">
         Select a section to Remix (max 30s)
       </Typography>

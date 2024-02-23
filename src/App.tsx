@@ -1,13 +1,20 @@
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Checkbox,
+  Chip,
   CircularProgress,
   Divider,
   FormControl,
+  IconButton,
   InputLabel,
+  LinearProgress,
   MenuItem,
   Select,
+  Stack,
   TextField,
   Typography,
 } from "@mui/material";
@@ -29,6 +36,7 @@ import AudioComponent from "./components/AudioComponent";
 import axios from "axios";
 import { uploadFromAudioBlob } from "./services/storage/remix.service";
 import { createWrapperDoc } from "./services/db/wrapper.service";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 const genreNames = [
   "Progressive House",
@@ -42,6 +50,11 @@ const genreNames = [
   "Americana",
   "Reggaeton",
 ].sort();
+
+const voiceCoverMap = {
+  eminem: "eminem-new-era",
+  trump: "trump",
+};
 
 export type Allin1Anaysis = {
   beatPositions: number[];
@@ -72,7 +85,10 @@ export type FX_PARAMS = {
 function App() {
   const [melodyFile, setMelodyFile] = useState<File>();
   const [melodyUrl, setMelodyUrl] = useState<string>();
+  const [melodyBlob, setMelodyBlob] = useState<Blob>();
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/arr.wav?alt=media"
+  const [fullInstrBlob, setFullInstrBlob] = useState<Blob>();
+  const [fullInstrUrl, setFullInstrUrl] = useState<string>();
   const [fullVocalsBlob, setFullVocalsBlob] = useState<Blob>();
   const [vocalsUrl, setVocalsUrl] = useState<string>();
   const [convertedVocalsBlob, setConvertedVocalsBlob] = useState<string>();
@@ -84,12 +100,16 @@ function App() {
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/instrumental.wav?alt=media"
   const [longerRemixBlob, setLongerRemixBlob] = useState<Blob>();
 
-  const [showWaveSelector, setShowWaveSelector] = useState(false);
+  // const [showWaveSelector, setShowWaveSelector] = useState(false);
   const [skipShortClips, setSkipShortClips] = useState(false);
-  const [noOfShortClips, setNoOfShortClips] = useState(5);
+  const [noOfShortClips, setNoOfShortClips] = useState(10);
   const [newAudio, setNewAudio] = useState<string>();
   const [longerAudioLoading, setLongerAudioLoading] = useState<boolean>(false);
   const [allin1Analysis, setAllIn1Analysis] = useState<Allin1Anaysis>();
+  const [selectedArtist, setSelectedArtist] = useState("");
+  // 1 - Bubbles & preparing voice cover
+  // 2 - Voice cover is ready
+  const [processStage, setProcessStage] = useState(0);
   // JSON.parse(
   //   '{"msg":"allin1","segments":[{"start":0.0,"end":0.01,"label":"verse"},{"start":0.01,"end":15.99,"label":"verse"},{"start":15.99,"end":16.0,"label":"verse"},{"start":15.99,"end":16.0,"label":"verse"},{"start":15.99,"end":16.0,"label":"verse"},{"start":15.99,"end":16.0,"label":"verse"},{"start":15.99,"end":16.0,"label":"verse"},{"start":15.99,"end":16.0,"label":"verse"}],"bpm":120,"beats":[0.49,1.0,1.49,2.0,2.49,2.99,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0,7.49,8.0,8.5,9.0,9.49,10.0,10.49,11.0,11.5,12.0,12.5,13.0,13.5,14.0,14.5,15.0,15.49],"downbeats":[0.49,2.49,4.5,6.5,8.5,10.49,12.5,14.5],"beat_positions":[1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3]}'
   // )
@@ -100,7 +120,7 @@ function App() {
     name?: string;
   }>({});
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const [youtubeLink, setYoutubeLink] = useState<string>("");
   const [vid, setVid] = useState("");
@@ -159,33 +179,6 @@ function App() {
     }
   };
 
-  // const onFetchAudio = async () => {
-  //   if (readyStateString === "OPEN" && melodyFile) {
-  //     // sendJsonMessage({
-  //     //   msg: "generate_long",
-  //     //   start: 0,
-  //     //   end: 0,
-  //     //   description: "Progressive House",
-  //     // });
-  //     // const arrayBuffer = await fileToArraybuffer(melodyFile);
-  //     // const base64_audio = await fileToBase64(melodyFile);
-  //     const bf_audio = await fileToArraybuffer(melodyFile);
-  //     sendMessage(bf_audio as ArrayBuffer);
-  //     // const obj = {
-  //     //   msg: "generate_short",
-  //     //   melody: base64_audio,
-  //     //   descriptions: genreNames.slice(0, 1),
-  //     //   durations: Array(1).fill(1),
-  //     // };
-  //     // sendJsonMessage(obj);
-  //     // Create a Blob with the binary data and additional metadata
-  //     // const blob = new Blob([arrayBuffer, JSON.stringify(obj)], {
-  //     //   type: "application/octet-stream",
-  //     // });
-  //     // wsRef.current.send(JSON.stringify(obj));
-  //   }
-  // };
-
   const onDropFile = async () => {
     if (readyStateString === "OPEN" && melodyFile) {
       const bf_audio = await fileToArraybuffer(melodyFile);
@@ -193,8 +186,32 @@ function App() {
     }
   };
 
+  const prepareVoiceCover = async (blob: Blob) => {
+    const modelFormData = new FormData();
+    modelFormData.append("file", blob);
+    // modelFormData.append("ip", "35.184.8.220");
+    if (voiceModelProps.url && !selectedArtist)
+      modelFormData.append("model_url", voiceModelProps.url);
+    if (voiceModelProps.name && !selectedArtist)
+      modelFormData.append("model_name", voiceModelProps.name);
+    if (selectedArtist)
+      modelFormData.append(
+        "model_name",
+        (voiceCoverMap as any)[selectedArtist]
+      );
+    const voiceModelRes = await axios.post(
+      `${import.meta.env.VITE_AUDIO_ANALYSER_PY}/proxy-voice-cover`,
+      modelFormData,
+      { responseType: "blob" }
+    );
+    const convertedVoiceBlob = voiceModelRes.data;
+    setConvertedVocalsBlob(convertedVoiceBlob);
+    setConvertedVocalsUrl(URL.createObjectURL(convertedVoiceBlob));
+    setProcessStage(2);
+  };
+
   const onGenerate = async () => {
-    if (showWaveSelector && vid) {
+    if (vid) {
       if (!sectionInfo?.description) {
         alert("Prompt is not provided");
         return;
@@ -227,32 +244,17 @@ function App() {
         );
         const slicedBlobData = res.data;
         console.log("Sliced vocals");
-        if (voiceModelProps.url || voiceModelProps.name) {
-          const modelFormData = new FormData();
-          modelFormData.append("file", slicedBlobData);
-          // modelFormData.append("ip", "35.184.8.220");
-          if (voiceModelProps.url)
-            modelFormData.append("model_url", voiceModelProps.url);
-          if (voiceModelProps.name)
-            modelFormData.append("model_name", voiceModelProps.name);
-          const voiceModelRes = await axios.post(
-            `${import.meta.env.VITE_AUDIO_ANALYSER_PY}/proxy-voice-cover`,
-            modelFormData,
-            { responseType: "blob" }
-          );
-          const convertedVoiceBlob = voiceModelRes.data;
-          setConvertedVocalsBlob(convertedVoiceBlob);
-          setConvertedVocalsUrl(URL.createObjectURL(convertedVoiceBlob));
-        } else {
-          setVocalsBlob(slicedBlobData);
-          setVocalsUrl(URL.createObjectURL(slicedBlobData));
-        }
+        // if (voiceModelProps.url || voiceModelProps.name) {
+
+        // } else {
+        setConvertedVocalsBlob(slicedBlobData);
+        setConvertedVocalsUrl(URL.createObjectURL(slicedBlobData));
+        // }
       } catch (e) {
         console.error(e);
       }
     } else {
       stopPlayer();
-      setShowWaveSelector(true);
     }
   };
 
@@ -273,6 +275,11 @@ function App() {
     };
     sendJsonMessage(obj);
   };
+
+  useEffect(() => {
+    if (melodyBlob) prepareVoiceCover(melodyBlob);
+    else if (melodyFile) prepareVoiceCover(melodyFile);
+  }, [melodyBlob, melodyFile]);
 
   const onFinish = async ({
     speedFactor,
@@ -364,8 +371,9 @@ function App() {
 
   useEffect(() => {
     if (vid) {
+      setProcessStage(1);
       onFetchShorts();
-      if (youtubeLink) fetchMusicInfo(vid);
+      // if (youtubeLink) fetchMusicInfo(vid);
     }
   }, [vid]);
 
@@ -385,20 +393,27 @@ function App() {
           setLongerRemixUrl(URL.createObjectURL(blob));
           setLongerRemixBlob(blob);
           setLongerAudioLoading(false);
-        } else if (allin1Analysis && !fullVocalsBlob) {
+        } else if (allin1Analysis && !fullInstrUrl) {
           const blob = new Blob([data], { type: "audio/wav" });
-          setFullVocalsBlob(blob);
-        } else if (longerRemixUrl && !vocalsUrl) {
-          const blob = new Blob([data], { type: "audio/wav" });
-          // setVocalsUrl(URL.createObjectURL(blob));
-          setVocalsBlob(blob);
-        } else if (!melodyUrl) {
+          // setFullVocalsBlob(blob);
+          setFullInstrBlob(blob);
+          setFullInstrUrl(URL.createObjectURL(blob));
+        }
+        // TODO: this is the prevocal applied vocals url, enable at some point with flow
+        // else if (longerRemixUrl && !vocalsUrl) {
+        //   const blob = new Blob([data], { type: "audio/wav" });
+        //   // setVocalsUrl(URL.createObjectURL(blob));
+        //   setVocalsBlob(blob);
+        // }
+        else if (!melodyUrl) {
           const blob = new Blob([data], { type: "audio/wav" });
           setMelodyUrl(URL.createObjectURL(blob));
-          if (skipShortClips) {
-            setShowWaveSelector(true);
-          }
+          setMelodyBlob(blob);
+          // if (skipShortClips) {
+          //   setShowWaveSelector(true);
+          // }
         } else {
+          if (convertedVocalsUrl) return;
           const blob = new Blob([data], { type: "audio/wav" });
           setNewAudio(URL.createObjectURL(blob));
         }
@@ -452,7 +467,7 @@ function App() {
           width={140}
           onClick={() => (window as any).navigation?.reload()}
         />
-        <Typography onClick={() => navigate("/fx")}>
+        <Typography>
           {readyStateString} - {isReady ? "Model Ready" : "Model Not Ready"}
         </Typography>
       </Box>
@@ -462,70 +477,201 @@ function App() {
           animate={{ y: vid ? "5%" : "20vh" }}
           transition={{ type: "spring", duration: 1 }}
         >
-          <motion.div animate={{ display: vid ? "none" : "unset" }}>
+          <motion.div
+          //  animate={{ display: vid ? "none" : "unset" }}
+          >
             <Typography variant="h3" align="center" textTransform={"uppercase"}>
               Remix any Song with NUMIX
             </Typography>
-            <Box
-              mt={10}
-              width="100%"
-              display={"flex"}
-              justifyContent="center"
-              flexWrap={"wrap"}
-              gap={2}
-            >
-              <Box
-                flexBasis={{ xs: "100%", md: "63%" }}
-                display="flex"
-                alignItems={"center"}
-              >
-                <TextField
-                  fullWidth
-                  disabled={!!vid}
-                  sx={{
-                    ".MuiInputBase-root": {
-                      borderRadius: "8px",
-                    },
-                    ".MuiOutlinedInput-notchedOutline": {
-                      borderColor: "#929292",
-                    },
-                  }}
-                  label="Youtube Link"
-                  color="secondary"
-                  value={youtubeLink}
-                  onChange={(e) => {
-                    if (!loadingVid) setYoutubeLink(e.target.value);
-                  }}
-                  InputProps={{
-                    endAdornment: (
-                      <Button
-                        onClick={getVidFromYtbLink}
-                        sx={{
-                          background:
-                            "linear-gradient(90deg, rgba(84,50,255,1) 0%, rgba(237,50,255,1) 100%)",
+            <Stack my={4} gap={1}>
+              <Box>
+                <Chip label="nuVoice" color="info" />
+              </Box>
+              {processStage === 1 && (
+                <Stack>
+                  <Box
+                    display={"flex"}
+                    alignItems="center"
+                    my={2}
+                    mx={1}
+                    gap={2}
+                    position="relative"
+                  >
+                    <Typography>Preparing the AI Cover for</Typography>
+                    <Stack gap={2} alignItems="center">
+                      <IconButton>
+                        <img
+                          src={`https://firebasestorage.googleapis.com/v0/b/nusic-dao-website.appspot.com/o/voice_cover_pics%2F${selectedArtist}.png?alt=media`}
+                          alt=""
+                          width={100}
+                          height={100}
+                          style={{
+                            objectFit: "contain",
+                            borderRadius: "50%",
+                            border: "2px solid #c3c3c3",
+                          }}
+                        />
+                      </IconButton>
+                      <Typography sx={{ textTransform: "uppercase" }}>
+                        {selectedArtist}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                  <Box>
+                    <LinearProgress />
+                  </Box>
+                </Stack>
+              )}
+              {processStage === 2 && (
+                <Box
+                  display={"flex"}
+                  alignItems="center"
+                  my={2}
+                  mx={1}
+                  gap={2}
+                  position="relative"
+                >
+                  <Typography>Your AI Cover is ready</Typography>
+                  <Button variant="contained">Check Out Now !!!</Button>
+                </Box>
+              )}
+              {processStage === 0 && (
+                <Box display={"flex"} alignItems="center" my={2} mx={1} gap={2}>
+                  {Object.keys(voiceCoverMap).map((name) => (
+                    <Stack gap={2} key={name} alignItems="center">
+                      <IconButton
+                        onClick={() => {
+                          if (selectedArtist === name) setSelectedArtist("");
+                          else setSelectedArtist(name);
                         }}
                       >
-                        {loadingVid ? (
-                          <CircularProgress color="secondary" size={"24px"} />
-                        ) : (
-                          <ArrowForwardIcon color="secondary" />
-                        )}
-                      </Button>
-                    ),
-                  }}
-                />
+                        <img
+                          src={`https://firebasestorage.googleapis.com/v0/b/nusic-dao-website.appspot.com/o/voice_cover_pics%2F${name}.png?alt=media`}
+                          alt=""
+                          width={100}
+                          height={100}
+                          style={{
+                            objectFit: "contain",
+                            borderRadius: "50%",
+                            border: "2px solid",
+                            borderColor:
+                              selectedArtist === name ? "#66bb6a" : "#c3c3c3",
+                          }}
+                        />
+                      </IconButton>
+                      <Typography
+                        sx={{ textTransform: "uppercase" }}
+                        color={name === selectedArtist ? "#66bb6a" : "#fff"}
+                      >
+                        {name}
+                      </Typography>
+                    </Stack>
+                  ))}
+                </Box>
+              )}
+              {processStage === 0 && (
+                <Accordion>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>Add Custom Models</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Box
+                      display={"flex"}
+                      justifyContent="center"
+                      mb={2}
+                      alignItems="center"
+                      gap={2}
+                    >
+                      <TextField
+                        label="Model Download Url"
+                        sx={{ width: 500 }}
+                        onChange={(e) => {
+                          setVoiceModelProps({
+                            ...voiceModelProps,
+                            url: e.target.value,
+                          });
+                        }}
+                        size="small"
+                      />
+                      <Typography>OR</Typography>
+                      <TextField
+                        label="Model Name"
+                        // sx={{ width: 500 }}
+                        onChange={(e) => {
+                          setVoiceModelProps({
+                            ...voiceModelProps,
+                            name: e.target.value,
+                          });
+                        }}
+                        size="small"
+                      />
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
+              )}
+            </Stack>
+            {!vid && (
+              <Box
+                // mt={10}
+                width="100%"
+                display={"flex"}
+                justifyContent="center"
+                flexWrap={"wrap"}
+                gap={2}
+              >
+                <Box
+                  flexBasis={{ xs: "100%", md: "63%" }}
+                  display="flex"
+                  alignItems={"center"}
+                >
+                  <TextField
+                    fullWidth
+                    disabled={!!vid}
+                    sx={{
+                      ".MuiInputBase-root": {
+                        borderRadius: "8px",
+                      },
+                      ".MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#929292",
+                      },
+                    }}
+                    label="Youtube Link"
+                    color="secondary"
+                    value={youtubeLink}
+                    onChange={(e) => {
+                      if (!loadingVid) setYoutubeLink(e.target.value);
+                    }}
+                    InputProps={{
+                      endAdornment: (
+                        <Button
+                          onClick={getVidFromYtbLink}
+                          sx={{
+                            background:
+                              "linear-gradient(90deg, rgba(84,50,255,1) 0%, rgba(237,50,255,1) 100%)",
+                          }}
+                        >
+                          {loadingVid ? (
+                            <CircularProgress color="secondary" size={"24px"} />
+                          ) : (
+                            <ArrowForwardIcon color="secondary" />
+                          )}
+                        </Button>
+                      ),
+                    }}
+                  />
+                </Box>
+                <Box flexBasis={{ xs: "100%", md: "34%" }}>
+                  <Uploader
+                    onDrop={onDropMusicUpload}
+                    melodyFile={melodyFile}
+                    initializeTone={initializeTone}
+                    playAudio={() => {}}
+                    vid={vid}
+                  />
+                </Box>
               </Box>
-              <Box flexBasis={{ xs: "100%", md: "34%" }}>
-                <Uploader
-                  onDrop={onDropMusicUpload}
-                  melodyFile={melodyFile}
-                  initializeTone={initializeTone}
-                  playAudio={() => {}}
-                  vid={vid}
-                />
-              </Box>
-            </Box>
-            <Box display={"flex"} alignItems="center" my={2} mx={1} gap={2}>
+            )}
+            {/* <Box display={"flex"} alignItems="center" my={2} mx={1} gap={2}>
               <Box display={"flex"} alignItems="center">
                 <Select
                   disabled={skipShortClips}
@@ -554,10 +700,10 @@ function App() {
                 />
                 <Typography>Skip 1s samples</Typography>
               </Box>
-            </Box>
+            </Box> */}
           </motion.div>
 
-          {vid && !showWaveSelector && (
+          {vid && processStage <= 2 && (
             <Box mt={4} width="100%">
               <Box mt={4} width="100%" display={"flex"} justifyContent="center">
                 <DropsFace
@@ -572,8 +718,7 @@ function App() {
               </Box>
             </Box>
           )}
-          {/* showWaveSelector && */}
-          {melodyUrl &&
+          {/* {melodyUrl &&
             showWaveSelector &&
             !longerRemixUrl &&
             !longerAudioLoading &&
@@ -590,44 +735,30 @@ function App() {
                   onSliceSelection={onSliceSelection}
                   onGenreSelection={onGenreSelection}
                   genre={sectionInfo?.description ?? ""}
-                  onModelPropsChange={(url?: string, name?: string) => {
-                    if (url) setVoiceModelProps({ ...voiceModelProps, url });
-                    if (name) setVoiceModelProps({ ...voiceModelProps, name });
-                  }}
                 />
               </Box>
-            )}
-          {/* <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => {
-              setLongerRemixUrl(
-                "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/instrumental.wav?alt=media"
-              );
-            }}
-          >
-            Load
-          </Button> */}
-          {(longerRemixUrl || longerAudioLoading) &&
-            (vocalsUrl || convertedVocalsUrl) && (
-              <Box mt={4} width="100%" display={"flex"} justifyContent="center">
-                <AudioComponent
-                  instrumentalUrl={longerRemixUrl}
-                  vocalsUrl={vocalsUrl ?? convertedVocalsUrl ?? ""} //TODO
-                  vid={vid}
-                  selectedGenre={sectionInfo?.description ?? "Error"}
-                  onFinish={onFinish}
-                  musicInfo={musicInfo}
-                  onBack={() => {
-                    setLongerRemixUrl("");
-                    setVocalsUrl("");
-                  }}
-                />
-              </Box>
-            )}
+            )} */}
+          {/* {(longerRemixUrl || longerAudioLoading) &&
+            (vocalsUrl || convertedVocalsUrl) && ( */}
+          {fullInstrUrl && convertedVocalsUrl && (
+            <Box mt={4} width="100%" display={"flex"} justifyContent="center">
+              <AudioComponent
+                instrumentalUrl={fullInstrUrl}
+                vocalsUrl={convertedVocalsUrl}
+                vid={vid}
+                selectedGenre={sectionInfo?.description ?? "Error"}
+                onFinish={onFinish}
+                musicInfo={musicInfo}
+                onBack={() => {
+                  setLongerRemixUrl("");
+                  setVocalsUrl("");
+                }}
+              />
+            </Box>
+          )}
           {!longerRemixUrl &&
             melodyUrl &&
-            !showWaveSelector &&
+            // !showWaveSelector &&
             newAudio &&
             allin1Analysis && (
               <Box mt={4} display={"flex"} justifyContent="center">
@@ -636,13 +767,13 @@ function App() {
                   color={"primary"}
                   onClick={onGenerate}
                 >
-                  Section with {sectionInfo?.description}
+                  Proceed with {sectionInfo?.description}
                 </LoadingButton>
               </Box>
             )}
-          {!longerRemixUrl &&
+          {/* {!longerRemixUrl &&
             melodyUrl &&
-            showWaveSelector &&
+            // showWaveSelector &&
             allin1Analysis && (
               <Box mt={4} display={"flex"} justifyContent="center">
                 <LoadingButton
@@ -654,7 +785,7 @@ function App() {
                   Generate
                 </LoadingButton>
               </Box>
-            )}
+            )} */}
         </motion.div>
       </Box>
     </Box>
