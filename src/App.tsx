@@ -147,6 +147,7 @@ function App() {
   const [reorderArr] = useState<number[]>(() =>
     [...positionArr].sort(() => Math.random() - 0.5)
   );
+  const [showAudioComponent, setShowAudioComponent] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
   // const navigate = useNavigate();
@@ -268,6 +269,7 @@ function App() {
         vid,
       });
       setLongerAudioLoading(true);
+      setShowAudioComponent(true);
       // if (!fullVocalsBlob) return;
       // const sliceFormData = new FormData();
       // sliceFormData.append("audio", fullVocalsBlob);
@@ -594,35 +596,48 @@ function App() {
                   </Box>
                 </Stack>
               )}
-              {processStage === 2 && fullInstrUrl && convertedVocalsUrl && (
-                // <Box
-                //   display={"flex"}
-                //   alignItems="center"
-                //   my={2}
-                //   mx={1}
-                //   gap={2}
-                //   position="relative"
-                // >
-                //   <Typography>Your AI Cover is ready</Typography>
-                //   <Button variant="contained">Check Out Now !!!</Button>
-                // </Box>
-                // {fullInstrUrl && convertedVocalsUrl && (
-                <Box width="100%" display={"flex"} justifyContent="center">
-                  <AudioComponent
-                    instrumentalUrl={longerRemixUrl ?? fullInstrUrl}
-                    vocalsUrl={convertedVocalsUrl}
-                    vid={vid}
-                    selectedGenre={sectionInfo?.description ?? "Error"}
-                    onFinish={onFinish}
-                    musicInfo={{ title: selectedArtist, tag: "AI Cover" }}
-                    onBack={() => {
-                      setLongerRemixUrl("");
-                      setVocalsUrl("");
-                    }}
-                  />
-                </Box>
+              {
+                processStage === 2 &&
+                  fullInstrUrl &&
+                  convertedVocalsUrl &&
+                  (!showAudioComponent ? (
+                    <Box
+                      display={"flex"}
+                      alignItems="center"
+                      my={2}
+                      mx={1}
+                      gap={2}
+                      position="relative"
+                    >
+                      <Typography>Your AI Cover is ready</Typography>
+                      <LoadingButton
+                        variant={"contained"}
+                        color={"primary"}
+                        onClick={onGenerate}
+                        loading={longerAudioLoading}
+                      >
+                        Proceed with {sectionInfo?.description}
+                      </LoadingButton>
+                    </Box>
+                  ) : (
+                    // {fullInstrUrl && convertedVocalsUrl && (
+                    <Box width="100%" display={"flex"} justifyContent="center">
+                      <AudioComponent
+                        instrumentalUrl={longerRemixUrl ?? fullInstrUrl}
+                        vocalsUrl={convertedVocalsUrl}
+                        vid={vid}
+                        selectedGenre={sectionInfo?.description ?? "Error"}
+                        onFinish={onFinish}
+                        musicInfo={{ title: selectedArtist, tag: "AI Cover" }}
+                        onBack={() => {
+                          setLongerRemixUrl("");
+                          setVocalsUrl("");
+                        }}
+                      />
+                    </Box>
+                  ))
                 // )}
-              )}
+              }
               {processStage === 0 && (
                 <Box
                   display={"flex"}
@@ -799,7 +814,7 @@ function App() {
             </Box> */}
           </motion.div>
 
-          {vid && processStage <= 2 && (
+          {vid && processStage <= 2 && !showAudioComponent && (
             <Box mt={4} width="100%" pb={10}>
               <Box mt={4} width="100%" display={"flex"} justifyContent="center">
                 <DropsFace
@@ -813,7 +828,7 @@ function App() {
                   reorderArr={reorderArr}
                 />
               </Box>
-              {!longerRemixUrl &&
+              {/* {!longerRemixUrl &&
                 melodyUrl &&
                 // newAudio &&
                 allin1Analysis && (
@@ -827,7 +842,7 @@ function App() {
                       Generate Instr with {sectionInfo?.description}
                     </LoadingButton>
                   </Box>
-                )}
+                )} */}
             </Box>
           )}
           {/* {melodyUrl &&

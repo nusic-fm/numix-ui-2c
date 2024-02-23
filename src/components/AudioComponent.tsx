@@ -27,6 +27,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import VolumeUpRoundedIcon from "@mui/icons-material/VolumeUpRounded";
 import VolumeOffRoundedIcon from "@mui/icons-material/VolumeOffRounded";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
+import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 
 const sliderSize = {
   height: "14px",
@@ -472,6 +473,15 @@ const AudioComponent = ({
             alignItems={"center"}
             justifyContent="space-between"
           >
+            <IconButton
+            // onClick={() => {
+            //   setIsInstrMuted(!isInstrMuted);
+            //   if (instrGainNodeRef.current)
+            //     instrGainNodeRef.current.gain.value = isInstrMuted ? 1 : 0;
+            // }}
+            >
+              <AutoAwesomeRoundedIcon />
+            </IconButton>
             <IconButton
               onClick={() => {
                 setIsInstrMuted(!isInstrMuted);
