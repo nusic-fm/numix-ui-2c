@@ -1,11 +1,12 @@
 import { Button, Skeleton, Box } from "@mui/material";
-import { useEffect, useState } from "react";
+// import { useEffect, useState } from "react";
 import BubbleUI from "react-bubble-ui";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import PauseIcon from "@mui/icons-material/Pause";
 import "react-bubble-ui/dist/index.css";
+import { SnippetProp } from "../App";
 
-const getColorsForGroup = (idx: number) => {
+export const getColorsForGroup = (idx: number) => {
   switch (idx) {
     case 5:
     case 2:
@@ -24,106 +25,29 @@ const getColorsForGroup = (idx: number) => {
   }
 };
 
-type SnippetProp = {
-  url: string;
-  name: string;
-  color: string;
-  duration: number;
-};
-
 type Props = {
   isTonePlaying: boolean;
   stopPlayer: () => void;
   playPlayer: () => void;
-  genreNames: string[];
-  newAudio?: string;
-  playAudio: (url: string, start: boolean) => void;
-  onGenreSelection: (description: string) => void;
+  audioListObj: {
+    [key: string]: SnippetProp;
+  };
+  playUrl?: string;
+  setPlayUrl: any;
+  positionArr: number[];
+  reorderArr: number[];
 };
 
 const DropsFace = ({
   isTonePlaying,
   stopPlayer,
   playPlayer,
-  genreNames,
-  newAudio,
-  playAudio,
-  onGenreSelection,
+  audioListObj,
+  playUrl,
+  setPlayUrl,
+  positionArr,
+  reorderArr,
 }: Props) => {
-  // const [prevLoadingNo, setPrevLoadingNo] = useState(-1);
-  const [playUrl, setPlayUrl] = useState<string>();
-  // const [newAudioNo, setNewAudioNo] = useState<number>(-1);
-  const [positionArr] = useState<number[]>([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-  const [reorderArr] = useState<number[]>(() =>
-    [...positionArr].sort(() => Math.random() - 0.5)
-  );
-  const [audioListObj, setAudioListObj] = useState<{
-    [key: string]: SnippetProp;
-  }>({});
-
-  // useEffect(() => {
-  //   const renderOrder = [...reorderArr];
-  //   // console.log(renderOrder);
-  //   renderOrder.map((no, i) => {
-  //     const prompt = genreNames[i];
-
-  //     // generateBatchMusic(prompt, durationArr[i].toString())
-  //     new Promise((res) => setTimeout(res, (i + 1) * 2000)).then(() => {
-  //       const url = testUrls(no - 1);
-  //       if (url) {
-  //         //   console.log(`no inside: ${no}`);
-  //         audioListObjRef.current = {
-  //           ...audioListObjRef.current,
-  //           [no.toString()]: {
-  //             url,
-  //             name: prompt,
-  //             color: getColorsForGroup(prompt),
-  //             duration: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1][i],
-  //           },
-  //         };
-  //       } else {
-  //         console.error("Unable to fetch URL: ", no);
-  //       }
-  //       setPrevLoadingNo(no);
-  //       setNewAudioNo(no);
-  //       // const nextAudioToLoadNo = renderOrder[renderOrder.indexOf(no) + 1];
-  //       // console.log("Next Loading: ", nextAudioToLoadNo);
-  //       // // setLoadingNo(nextAudioToLoadNo);
-  //     });
-  //   });
-  // }, []);
-
-  useEffect(() => {
-    if (playUrl) {
-      const key = Object.keys(audioListObj).find(
-        (k) => audioListObj[k].url === playUrl
-      );
-      onGenreSelection(audioListObj[key ?? 0].name);
-      playAudio(playUrl, true);
-    }
-  }, [playUrl]);
-
-  useEffect(() => {
-    if (newAudio) {
-      setAudioListObj((preAudioListObj) => {
-        const currentIdx = Object.keys(preAudioListObj).length;
-        // const idx = reorderArr[currentIdx] - 1;
-        const name = genreNames[currentIdx];
-        return {
-          ...preAudioListObj,
-          [reorderArr[currentIdx].toString()]: {
-            name,
-            color: getColorsForGroup(currentIdx),
-            duration: 1,
-            url: newAudio,
-          },
-        };
-      });
-      // playAudio(newAudio, true);
-      setPlayUrl(newAudio);
-    }
-  }, [newAudio]);
-
   return (
     <BubbleUI
       options={{

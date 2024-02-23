@@ -14,6 +14,7 @@ import {
   LinearProgress,
   MenuItem,
   Select,
+  Snackbar,
   Stack,
   TextField,
   Typography,
@@ -23,7 +24,7 @@ import "./App.css";
 import Uploader from "./components/Uploader";
 import { useTonejs } from "./hooks/useToneService";
 import { motion } from "framer-motion";
-import DropsFace from "./components/DropsFace";
+import DropsFace, { getColorsForGroup } from "./components/DropsFace";
 import WaveSelector from "./components/WaveSelector";
 import useWebSocket from "react-use-websocket";
 import { LoadingButton } from "@mui/lab";
@@ -49,11 +50,28 @@ const genreNames = [
   "Breakbeat",
   "Americana",
   "Reggaeton",
+  "Pop",
+  "Dubstep",
+  "Trip Hop, Ethereal",
+  "Rock",
+  "A piano version",
 ].sort();
 
+export type SnippetProp = {
+  url: string;
+  name: string;
+  color: string;
+  duration: number;
+};
+
 const voiceCoverMap = {
-  eminem: "eminem-new-era",
-  trump: "trump",
+  eminem: ["eminem-new-era", "png"],
+  trump: ["trump", "png"],
+  CartmanClassico: ["CartmanClassico", "jpeg"],
+  elvis: ["Elvis_model", "jpeg"],
+  GreenDay300: ["GreenDay300", "jpeg"],
+  KanyeWest: ["KanyeWestGraduation", "jpeg"],
+  "minecraft door": ["mcdoor", "jpeg"],
 };
 
 export type Allin1Anaysis = {
@@ -102,8 +120,8 @@ function App() {
 
   // const [showWaveSelector, setShowWaveSelector] = useState(false);
   const [skipShortClips, setSkipShortClips] = useState(false);
-  const [noOfShortClips, setNoOfShortClips] = useState(10);
-  const [newAudio, setNewAudio] = useState<string>();
+  const [noOfShortClips, setNoOfShortClips] = useState(15);
+  // const [newAudio, setNewAudio] = useState<string>();
   const [longerAudioLoading, setLongerAudioLoading] = useState<boolean>(false);
   const [allin1Analysis, setAllIn1Analysis] = useState<Allin1Anaysis>();
   const [selectedArtist, setSelectedArtist] = useState("");
@@ -119,6 +137,17 @@ function App() {
     url?: string;
     name?: string;
   }>({});
+  const [audioListObj, setAudioListObj] = useState<{
+    [key: string]: SnippetProp;
+  }>({});
+  const [playUrl, setPlayUrl] = useState<string>();
+  const [positionArr] = useState<number[]>([
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+  ]);
+  const [reorderArr] = useState<number[]>(() =>
+    [...positionArr].sort(() => Math.random() - 0.5)
+  );
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   // const navigate = useNavigate();
 
@@ -194,11 +223,18 @@ function App() {
       modelFormData.append("model_url", voiceModelProps.url);
     if (voiceModelProps.name && !selectedArtist)
       modelFormData.append("model_name", voiceModelProps.name);
-    if (selectedArtist)
+    if (selectedArtist) {
       modelFormData.append(
         "model_name",
-        (voiceCoverMap as any)[selectedArtist]
+        (voiceCoverMap as any)[selectedArtist][0]
       );
+      modelFormData.append(
+        "model_url",
+        `https://firebasestorage.googleapis.com/v0/b/nusic-dao-website.appspot.com/o/${
+          (voiceCoverMap as any)[selectedArtist][1]
+        }.zip?alt=media`
+      );
+    }
     const voiceModelRes = await axios.post(
       `${import.meta.env.VITE_AUDIO_ANALYSER_PY}/proxy-voice-cover`,
       modelFormData,
@@ -208,6 +244,7 @@ function App() {
     setConvertedVocalsBlob(convertedVoiceBlob);
     setConvertedVocalsUrl(URL.createObjectURL(convertedVoiceBlob));
     setProcessStage(2);
+    setSnackbarMessage("AI voice cover ready");
   };
 
   const onGenerate = async () => {
@@ -231,28 +268,28 @@ function App() {
         vid,
       });
       setLongerAudioLoading(true);
-      if (!fullVocalsBlob) return;
-      const sliceFormData = new FormData();
-      sliceFormData.append("audio", fullVocalsBlob);
-      sliceFormData.append("start", sectionStartEnd?.start.toString() ?? "1");
-      sliceFormData.append("end", sectionStartEnd?.end.toString() ?? "2");
-      try {
-        const res = await axios.post(
-          `${import.meta.env.VITE_AUDIO_ANALYSER_PY}/slice`,
-          sliceFormData,
-          { responseType: "blob" }
-        );
-        const slicedBlobData = res.data;
-        console.log("Sliced vocals");
-        // if (voiceModelProps.url || voiceModelProps.name) {
+      // if (!fullVocalsBlob) return;
+      // const sliceFormData = new FormData();
+      // sliceFormData.append("audio", fullVocalsBlob);
+      // sliceFormData.append("start", sectionStartEnd?.start.toString() ?? "1");
+      // sliceFormData.append("end", sectionStartEnd?.end.toString() ?? "2");
+      // try {
+      //   const res = await axios.post(
+      //     `${import.meta.env.VITE_AUDIO_ANALYSER_PY}/slice`,
+      //     sliceFormData,
+      //     { responseType: "blob" }
+      //   );
+      //   const slicedBlobData = res.data;
+      //   console.log("Sliced vocals");
+      //   // if (voiceModelProps.url || voiceModelProps.name) {
 
-        // } else {
-        setConvertedVocalsBlob(slicedBlobData);
-        setConvertedVocalsUrl(URL.createObjectURL(slicedBlobData));
-        // }
-      } catch (e) {
-        console.error(e);
-      }
+      //   // } else {
+      //   setConvertedVocalsBlob(slicedBlobData);
+      //   setConvertedVocalsUrl(URL.createObjectURL(slicedBlobData));
+      //   // }
+      // } catch (e) {
+      //   console.error(e);
+      // }
     } else {
       stopPlayer();
     }
@@ -415,7 +452,24 @@ function App() {
         } else {
           if (convertedVocalsUrl) return;
           const blob = new Blob([data], { type: "audio/wav" });
-          setNewAudio(URL.createObjectURL(blob));
+          const _newAudio = URL.createObjectURL(blob);
+          // setNewAudio(URL.createObjectURL(blob));
+          setAudioListObj((preAudioListObj) => {
+            const currentIdx = Object.keys(preAudioListObj).length;
+            // const idx = reorderArr[currentIdx] - 1;
+            const name = genreNames[currentIdx];
+            return {
+              ...preAudioListObj,
+              [reorderArr[currentIdx].toString()]: {
+                name,
+                color: getColorsForGroup(currentIdx),
+                duration: 1,
+                url: _newAudio,
+              },
+            };
+          });
+          // playAudio(newAudio, true);
+          setPlayUrl(_newAudio);
         }
       } else {
         const dataObj = JSON.parse(data);
@@ -431,6 +485,22 @@ function App() {
       }
     }
   }, [lastMessage]);
+
+  useEffect(() => {
+    if (playUrl) {
+      const key = Object.keys(audioListObj).find(
+        (k) => audioListObj[k].url === playUrl
+      );
+      onGenreSelection(audioListObj[key ?? 0].name);
+      playAudio(playUrl);
+    }
+  }, [playUrl]);
+
+  useEffect(() => {
+    if (Object.keys(audioListObj).length === noOfShortClips) {
+      setSnackbarMessage("Analyzing the track");
+    }
+  }, [audioListObj]);
 
   useEffect(() => {
     if (melodyFile) {
@@ -501,7 +571,9 @@ function App() {
                     <Stack gap={2} alignItems="center">
                       <IconButton>
                         <img
-                          src={`https://firebasestorage.googleapis.com/v0/b/nusic-dao-website.appspot.com/o/voice_cover_pics%2F${selectedArtist}.png?alt=media`}
+                          src={`https://firebasestorage.googleapis.com/v0/b/nusic-dao-website.appspot.com/o/voice_cover_pics%2F${
+                            (voiceCoverMap as any)[selectedArtist][1]
+                          }.png?alt=media`}
                           alt=""
                           width={100}
                           height={100}
@@ -522,31 +594,55 @@ function App() {
                   </Box>
                 </Stack>
               )}
-              {processStage === 2 && (
+              {processStage === 2 && fullInstrUrl && convertedVocalsUrl && (
+                // <Box
+                //   display={"flex"}
+                //   alignItems="center"
+                //   my={2}
+                //   mx={1}
+                //   gap={2}
+                //   position="relative"
+                // >
+                //   <Typography>Your AI Cover is ready</Typography>
+                //   <Button variant="contained">Check Out Now !!!</Button>
+                // </Box>
+                // {fullInstrUrl && convertedVocalsUrl && (
+                <Box width="100%" display={"flex"} justifyContent="center">
+                  <AudioComponent
+                    instrumentalUrl={longerRemixUrl ?? fullInstrUrl}
+                    vocalsUrl={convertedVocalsUrl}
+                    vid={vid}
+                    selectedGenre={sectionInfo?.description ?? "Error"}
+                    onFinish={onFinish}
+                    musicInfo={musicInfo}
+                    onBack={() => {
+                      setLongerRemixUrl("");
+                      setVocalsUrl("");
+                    }}
+                  />
+                </Box>
+                // )}
+              )}
+              {processStage === 0 && (
                 <Box
                   display={"flex"}
+                  justifyContent="center"
                   alignItems="center"
                   my={2}
                   mx={1}
                   gap={2}
-                  position="relative"
+                  flexWrap="wrap"
                 >
-                  <Typography>Your AI Cover is ready</Typography>
-                  <Button variant="contained">Check Out Now !!!</Button>
-                </Box>
-              )}
-              {processStage === 0 && (
-                <Box display={"flex"} alignItems="center" my={2} mx={1} gap={2}>
-                  {Object.keys(voiceCoverMap).map((name) => (
-                    <Stack gap={2} key={name} alignItems="center">
+                  {Object.entries(voiceCoverMap).map(([key, value]) => (
+                    <Stack gap={2} key={key} alignItems="center">
                       <IconButton
                         onClick={() => {
-                          if (selectedArtist === name) setSelectedArtist("");
-                          else setSelectedArtist(name);
+                          if (selectedArtist === key) setSelectedArtist("");
+                          else setSelectedArtist(key);
                         }}
                       >
                         <img
-                          src={`https://firebasestorage.googleapis.com/v0/b/nusic-dao-website.appspot.com/o/voice_cover_pics%2F${name}.png?alt=media`}
+                          src={`https://firebasestorage.googleapis.com/v0/b/nusic-dao-website.appspot.com/o/voice_cover_pics%2F${key}.${value[1]}?alt=media`}
                           alt=""
                           width={100}
                           height={100}
@@ -555,15 +651,15 @@ function App() {
                             borderRadius: "50%",
                             border: "2px solid",
                             borderColor:
-                              selectedArtist === name ? "#66bb6a" : "#c3c3c3",
+                              selectedArtist === key ? "#66bb6a" : "#c3c3c3",
                           }}
                         />
                       </IconButton>
                       <Typography
                         sx={{ textTransform: "uppercase" }}
-                        color={name === selectedArtist ? "#66bb6a" : "#fff"}
+                        color={key === selectedArtist ? "#66bb6a" : "#fff"}
                       >
-                        {name}
+                        {key}
                       </Typography>
                     </Stack>
                   ))}
@@ -704,18 +800,34 @@ function App() {
           </motion.div>
 
           {vid && processStage <= 2 && (
-            <Box mt={4} width="100%">
+            <Box mt={4} width="100%" pb={10}>
               <Box mt={4} width="100%" display={"flex"} justifyContent="center">
                 <DropsFace
-                  genreNames={genreNames}
                   isTonePlaying={isTonePlaying}
                   stopPlayer={stopPlayer}
                   playPlayer={playPlayer}
-                  newAudio={newAudio}
-                  playAudio={playAudio}
-                  onGenreSelection={onGenreSelection}
+                  audioListObj={audioListObj}
+                  playUrl={playUrl}
+                  setPlayUrl={setPlayUrl}
+                  positionArr={positionArr}
+                  reorderArr={reorderArr}
                 />
               </Box>
+              {!longerRemixUrl &&
+                melodyUrl &&
+                // newAudio &&
+                allin1Analysis && (
+                  <Box mt={4} display={"flex"} justifyContent="center">
+                    <LoadingButton
+                      variant={"contained"}
+                      color={"primary"}
+                      onClick={onGenerate}
+                      loading={longerAudioLoading}
+                    >
+                      Generate Instr with {sectionInfo?.description}
+                    </LoadingButton>
+                  </Box>
+                )}
             </Box>
           )}
           {/* {melodyUrl &&
@@ -740,37 +852,7 @@ function App() {
             )} */}
           {/* {(longerRemixUrl || longerAudioLoading) &&
             (vocalsUrl || convertedVocalsUrl) && ( */}
-          {fullInstrUrl && convertedVocalsUrl && (
-            <Box mt={4} width="100%" display={"flex"} justifyContent="center">
-              <AudioComponent
-                instrumentalUrl={fullInstrUrl}
-                vocalsUrl={convertedVocalsUrl}
-                vid={vid}
-                selectedGenre={sectionInfo?.description ?? "Error"}
-                onFinish={onFinish}
-                musicInfo={musicInfo}
-                onBack={() => {
-                  setLongerRemixUrl("");
-                  setVocalsUrl("");
-                }}
-              />
-            </Box>
-          )}
-          {!longerRemixUrl &&
-            melodyUrl &&
-            // !showWaveSelector &&
-            newAudio &&
-            allin1Analysis && (
-              <Box mt={4} display={"flex"} justifyContent="center">
-                <LoadingButton
-                  variant={"contained"}
-                  color={"primary"}
-                  onClick={onGenerate}
-                >
-                  Proceed with {sectionInfo?.description}
-                </LoadingButton>
-              </Box>
-            )}
+
           {/* {!longerRemixUrl &&
             melodyUrl &&
             // showWaveSelector &&
@@ -788,6 +870,13 @@ function App() {
             )} */}
         </motion.div>
       </Box>
+      <Snackbar
+        open={!!snackbarMessage}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarMessage("")}
+        message={snackbarMessage}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      />
     </Box>
   );
 }

@@ -26,6 +26,7 @@ import { FX_PARAMS } from "../App";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import VolumeUpRoundedIcon from "@mui/icons-material/VolumeUpRounded";
 import VolumeOffRoundedIcon from "@mui/icons-material/VolumeOffRounded";
+import LockRoundedIcon from "@mui/icons-material/LockRounded";
 
 const sliderSize = {
   height: "14px",
@@ -299,14 +300,14 @@ const AudioComponent = ({
     <Box
       px={{ xs: "5%", md: "10%", lg: "15%" }}
       sx={{ background: "#000" }}
-      height="100vh"
+      // height="100vh"
       p={4}
     >
-      <Box display={"flex"} justifyContent="end" px={4} mb={2}>
+      {/* <Box display={"flex"} justifyContent="end" px={4} mb={2}>
         <IconButton onClick={onBack}>
           <ArrowBackIcon />
         </IconButton>
-      </Box>
+      </Box> */}
       <Stack sx={{ backgroundColor: "#242424" }} p={4} borderRadius="58px">
         <Box
           display={"flex"}
@@ -340,7 +341,13 @@ const AudioComponent = ({
             <Typography>{selectedGenre}</Typography>
           </Stack>
         </Box>
-        <Box display={"flex"} gap={2} alignItems="center" p={2}>
+        <Box
+          display={"flex"}
+          gap={2}
+          alignItems="center"
+          p={2}
+          position="relative"
+        >
           <Box>
             <Fab
               sx={{
@@ -382,6 +389,27 @@ const AudioComponent = ({
             />
           )}
 
+          <Box
+            width={"calc(60% + 56px)"}
+            position={"absolute"}
+            height="100%"
+            display={"flex"}
+            justifyContent="end"
+            alignItems={"center"}
+            zIndex={99}
+          >
+            <Box
+              sx={{ bgcolor: "rgba(0,0,0,0.7)" }}
+              height="80%"
+              width={100}
+              display="flex"
+              alignItems={"center"}
+              justifyContent="center"
+              borderRadius={2}
+            >
+              <LockRoundedIcon />
+            </Box>
+          </Box>
           <Typography variant="caption">
             00:{instrDurationInSec.toFixed(0)}
           </Typography>
@@ -691,7 +719,7 @@ const AudioComponent = ({
           </Stack>
         </Box>
       </Stack>
-      <Box mt={4} display={"flex"} justifyContent="center">
+      {/* <Box mt={4} display={"flex"} justifyContent="center">
         <Button
           variant="outlined"
           color="info"
@@ -711,7 +739,7 @@ const AudioComponent = ({
         >
           Finish
         </Button>
-      </Box>
+      </Box> */}
     </Box>
   );
 
