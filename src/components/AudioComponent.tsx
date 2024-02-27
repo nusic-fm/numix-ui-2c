@@ -88,21 +88,44 @@ const AudioComponent = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isInstrMuted, setIsInstrMuted] = useState(false);
   const [instrDurationInSec, setInstrDurationInSec] = useState<number>(0);
+  const [isSecondaryInstrReady, setIsSecondaryInstrReady] = useState(false);
 
   const vocalPlayControlRef = useRef<any>(null);
   const vocalPhaseVocoderNodeRef = useRef<any>(null);
   const instrPlayControlRef = useRef<any>(null);
   const instrPhaseVocoderNodeRef = useRef<any>(null);
   const instrGainNodeRef = useRef<null | GainNode>(null);
+  const instr2PlayControlRef = useRef<any>(null);
+  const instr2PhaseVocoderNodeRef = useRef<any>(null);
+  const instr2GainNodeRef = useRef<null | GainNode>(null);
   const delayGainNodeRef = useRef<null | GainNode>(null);
   const reverbGainNodeRef = useRef<null | GainNode>(null);
   const flangerGainNodeRef = useRef<null | GainNode>(null);
   const vocalsGainNodeRef = useRef<null | GainNode>(null);
 
+  const [isOriginalPlaying, setIsOriginalPlaying] = useState(true);
+
+  useEffect(() => {
+    if (instrPlayControlRef.current && instr2PlayControlRef.current) {
+      if (isOriginalPlaying) {
+        if (isPlaying) instr2PlayControlRef.current.stop();
+        instrPlayControlRef.current.seek(
+          vocalPlayControlRef.current.currentPosition
+        );
+        if (isPlaying) instrPlayControlRef.current.start();
+      } else {
+        if (isPlaying) instrPlayControlRef.current.stop();
+        instr2PlayControlRef.current.seek(
+          vocalPlayControlRef.current.currentPosition
+        );
+        if (isPlaying) instr2PlayControlRef.current.start();
+      }
+    }
+  }, [isOriginalPlaying]);
   useEffect(() => {
     const intervalForCursor = setInterval(() => {
-      if (wavesurfer && instrPlayControlRef.current && instrumentalUrl) {
-        const currentPosition = instrPlayControlRef.current.currentPosition;
+      if (wavesurfer && vocalPlayControlRef.current && vocalsUrl) {
+        const currentPosition = vocalPlayControlRef.current.currentPosition;
 
         wavesurfer?.setTime(currentPosition);
       }
@@ -185,24 +208,41 @@ const AudioComponent = ({
   };
 
   const initInstr = async () => {
-    const instrBuffer = await loader.load(instrumentalUrl);
+    if (instrPlayControlRef.current) {
+      const instrBuffer = await loader.load(instrumentalUrl);
+      // Instrumental Setup
+      const [instrPlayerEngine, instrPhaseVocoderNode, instrGainNode] =
+        await setupEngine(instrBuffer);
+      const instrPlayControl = new wavesAudio.PlayControl(instrPlayerEngine);
+      instrPlayControl.setLoopBoundaries(0, instrBuffer.duration);
+      instrPlayControl.loop = true;
 
-    // Instrumental Setup
-    const [instrPlayerEngine, instrPhaseVocoderNode, instrGainNode] =
-      await setupEngine(instrBuffer);
-    const instrPlayControl = new wavesAudio.PlayControl(instrPlayerEngine);
-    instrPlayControl.setLoopBoundaries(0, instrBuffer.duration);
-    instrPlayControl.loop = true;
-    setInstrDurationInSec(instrBuffer.duration);
+      instrGainNode.connect(audioContext.destination);
 
-    instrGainNode.connect(audioContext.destination);
+      instr2GainNodeRef.current = instrGainNode;
+      instr2PlayControlRef.current = instrPlayControl;
+      instr2PlayControlRef.current.speed = speedFactor;
+      instr2PhaseVocoderNodeRef.current = instrPhaseVocoderNode;
+      setIsSecondaryInstrReady(true);
+    } else {
+      const instrBuffer = await loader.load(instrumentalUrl);
+      // Instrumental Setup
+      const [instrPlayerEngine, instrPhaseVocoderNode, instrGainNode] =
+        await setupEngine(instrBuffer);
+      const instrPlayControl = new wavesAudio.PlayControl(instrPlayerEngine);
+      instrPlayControl.setLoopBoundaries(0, instrBuffer.duration);
+      instrPlayControl.loop = true;
+      setInstrDurationInSec(instrBuffer.duration);
 
-    instrGainNodeRef.current = instrGainNode;
-    instrPlayControlRef.current = instrPlayControl;
-    instrPhaseVocoderNodeRef.current = instrPhaseVocoderNode;
-    if (isPlaying) {
-      instrPlayControl.seek(vocalPlayControlRef.current.currentPosition);
-      instrPlayControl.start();
+      instrGainNode.connect(audioContext.destination);
+
+      instrGainNodeRef.current = instrGainNode;
+      instrPlayControlRef.current = instrPlayControl;
+      instrPhaseVocoderNodeRef.current = instrPhaseVocoderNode;
+      if (isPlaying) {
+        instrPlayControl.seek(vocalPlayControlRef.current.currentPosition);
+        instrPlayControl.start();
+      }
     }
   };
 
@@ -360,11 +400,13 @@ const AudioComponent = ({
                   audioContext.resume();
                 }
                 if (!isPlaying) {
-                  instrPlayControlRef.current?.start();
+                  if (isOriginalPlaying) instrPlayControlRef.current?.start();
+                  else instr2PlayControlRef.current?.start();
                   vocalPlayControlRef.current.start();
                   setIsPlaying(true);
                 } else {
-                  instrPlayControlRef.current.pause();
+                  if (isOriginalPlaying) instrPlayControlRef.current?.pause();
+                  else instr2PlayControlRef.current?.pause();
                   vocalPlayControlRef.current.pause();
                   setIsPlaying(false);
                 }
@@ -474,19 +516,31 @@ const AudioComponent = ({
             justifyContent="space-between"
           >
             <IconButton
-            // onClick={() => {
-            //   setIsInstrMuted(!isInstrMuted);
-            //   if (instrGainNodeRef.current)
-            //     instrGainNodeRef.current.gain.value = isInstrMuted ? 1 : 0;
-            // }}
+              onClick={() => {
+                setIsOriginalPlaying(!isOriginalPlaying);
+              }}
+              // onClick={() => {
+              //   setIsInstrMuted(!isInstrMuted);
+              //   if (instrGainNodeRef.current)
+              //     instrGainNodeRef.current.gain.value = isInstrMuted ? 1 : 0;
+              // }}
             >
-              <AutoAwesomeRoundedIcon />
+              {isSecondaryInstrReady === false ? (
+                <CircularProgress size={18} color="secondary" />
+              ) : isOriginalPlaying ? (
+                <AutoAwesomeRoundedIcon />
+              ) : (
+                <AutoAwesomeRoundedIcon color="primary" />
+              )}
             </IconButton>
             <IconButton
               onClick={() => {
                 setIsInstrMuted(!isInstrMuted);
-                if (instrGainNodeRef.current)
+                if (isOriginalPlaying && instrGainNodeRef.current) {
                   instrGainNodeRef.current.gain.value = isInstrMuted ? 1 : 0;
+                } else if (instr2GainNodeRef.current) {
+                  instr2GainNodeRef.current.gain.value = isInstrMuted ? 1 : 0;
+                }
               }}
             >
               {isInstrMuted ? (
@@ -508,6 +562,8 @@ const AudioComponent = ({
                   ).value = 1.0;
                   vocalPlayControlRef.current.speed = 1.0;
                   instrPlayControlRef.current.speed = 1.0;
+                  if (instr2PlayControlRef.current)
+                    instr2PlayControlRef.current.speed = 1.0;
                 } else {
                   vocalPhaseVocoderNodeRef.current.parameters.get(
                     "pitchFactor"
@@ -517,6 +573,8 @@ const AudioComponent = ({
                   ).value = (pitchFactor * 1) / speedFactor;
                   vocalPlayControlRef.current.speed = speedFactor;
                   instrPlayControlRef.current.speed = speedFactor;
+                  if (instr2PlayControlRef.current)
+                    instr2PlayControlRef.current.speed = speedFactor;
                 }
                 setWarpBypassed(newWarpBypassed);
               }}
@@ -558,6 +616,10 @@ const AudioComponent = ({
                 instrPlayControlRef.current.speed = warpBypassed
                   ? 1.0
                   : newSpeedFactor;
+                if (instr2PlayControlRef.current)
+                  instr2PlayControlRef.current.speed = warpBypassed
+                    ? 1.0
+                    : newSpeedFactor;
                 vocalPitchFactorParam.value = warpBypassed
                   ? 1.0
                   : (pitchFactor * 1) / speedFactor;

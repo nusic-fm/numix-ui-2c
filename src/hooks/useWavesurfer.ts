@@ -34,7 +34,7 @@ export const useWavesurfer = (containerRef: any, audioUrl: string) => {
     return () => {
       ws.destroy();
     };
-  }, [containerRef, audioUrl]);
+  }, [containerRef]);
 
   return wavesurfer;
 };

@@ -38,6 +38,7 @@ import axios from "axios";
 import { uploadFromAudioBlob } from "./services/storage/remix.service";
 import { createWrapperDoc } from "./services/db/wrapper.service";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import StopRounded from "@mui/icons-material/StopRounded";
 
 const genreNames = [
   "Progressive House",
@@ -254,6 +255,7 @@ function App() {
         alert("Prompt is not provided");
         return;
       }
+      stopPlayer();
       // setVocalsUrl(
       //   "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/vocals.wav?alt=media"
       // );
@@ -432,6 +434,7 @@ function App() {
           setLongerRemixUrl(URL.createObjectURL(blob));
           setLongerRemixBlob(blob);
           setLongerAudioLoading(false);
+          setSnackbarMessage("Remix is ready");
         } else if (allin1Analysis && !fullInstrUrl) {
           const blob = new Blob([data], { type: "audio/wav" });
           // setFullVocalsBlob(blob);
@@ -816,6 +819,11 @@ function App() {
 
           {vid && processStage <= 2 && !showAudioComponent && (
             <Box mt={4} width="100%" pb={10}>
+              <Box display={"flex"} justifyContent="center">
+                <IconButton onClick={stopPlayer}>
+                  <StopRounded />
+                </IconButton>
+              </Box>
               <Box mt={4} width="100%" display={"flex"} justifyContent="center">
                 <DropsFace
                   isTonePlaying={isTonePlaying}
