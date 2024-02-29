@@ -16,11 +16,14 @@
   "dependencies": {
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
+    "@gradio/client": "^0.12.1",
+    "@huggingface/hub": "^0.14.2",
     "@mui/icons-material": "^5.15.4",
     "@mui/lab": "^5.0.0-alpha.160",
     "@mui/material": "^5.15.4",
     "@wavesurfer/react": "^1.0.4",
     "axios": "^1.6.5",
+    "colormap": "^2.3.2",
     "fft.js": "^4.0.4",
     "firebase": "^10.8.0",
     "framer-motion": "^10.18.0",
@@ -40,6 +43,7 @@
     "webfontloader": "^1.6.28"
   },
   "devDependencies": {
+    "@types/colormap": "^2.3.4",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@types/webfontloader": "^1.6.38",

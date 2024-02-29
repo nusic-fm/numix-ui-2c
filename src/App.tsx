@@ -65,7 +65,7 @@ export type SnippetProp = {
   duration: number;
 };
 
-const voiceCoverMap = {
+export const voiceCoverMap = {
   eminem: ["eminem-new-era", "png"],
   trump: ["trump", "png"],
   CartmanClassico: ["CartmanClassico", "jpeg"],
