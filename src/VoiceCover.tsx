@@ -76,7 +76,7 @@ function VoiceCover({}: Props) {
     // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/arr.wav?alt=media&token=141f6e3c-3ef7-48ec-bd37-3df48783570b"
   );
   const [localCoverUrl, setLocalCoverUrl] = useState("");
-  const [voiceModelProps, setVoiceModelProps] = useState({});
+  const [voiceModelProps, setVoiceModelProps] = useState({ url: "", name: "" });
   const [eta, setEta] = useState(0);
 
   const [progressMsgs, setProgressMsgs] = useState<string[]>([]);
@@ -93,10 +93,11 @@ function VoiceCover({}: Props) {
       const user = await whoAmI({
         credentials: { accessToken: enteredAccessToken },
       });
+      const _userName = user.name;
       setSettingsLoading(false);
       window.localStorage.setItem("HF_AT", enteredAccessToken);
       setHfToken(enteredAccessToken);
-      setUserName("nusic"); // user.name "nusic"
+      setUserName(_userName.endsWith("nusic") ? "nusic" : _userName); // user.name "nusic"
     } catch (e) {
       setShowAccountSetupStepper(true);
       setErrorSnackbarMessage("Invalid Access Token");
@@ -184,8 +185,14 @@ function VoiceCover({}: Props) {
         await checkSpace();
         return;
       }
-      if (!selectedArtist) {
-        alert("Select a voice model");
+      if (!selectedArtist && !(voiceModelProps.url && voiceModelProps.name)) {
+        setErrorSnackbarMessage(
+          "Select a voice model or provide a custom model"
+        );
+        return;
+      }
+      if (!youtubeLink) {
+        setErrorSnackbarMessage("Enter a Youtube link");
         return;
       }
       // Reset State:
@@ -196,17 +203,27 @@ function VoiceCover({}: Props) {
       const app = await client(getSpaceId(userName), {
         hf_token: hfToken as `hf_${string}`,
       });
-      const name = (voiceCoverMap as any)[selectedArtist][0];
-      const voiceModelUrl = `https://firebasestorage.googleapis.com/v0/b/nusic-dao-website.appspot.com/o/${name}.zip?alt=media`;
+      const _modelObj = { url: "", name: "" };
+      if (selectedArtist) {
+        const name = (voiceCoverMap as any)[selectedArtist][0];
+        const voiceModelUrl = `https://firebasestorage.googleapis.com/v0/b/nusic-dao-website.appspot.com/o/${name}.zip?alt=media`;
+        _modelObj.url = voiceModelUrl;
+        _modelObj.name = name;
+      } else {
+        _modelObj.url = voiceModelProps.url;
+        _modelObj.name = voiceModelProps.name;
+      }
 
       const choicesResult = await app.predict(5, []);
       const choices = (choicesResult as any).data[0].choices;
-      const choiceIdx = choices.findIndex((c: string[]) => c.includes(name));
+      const choiceIdx = choices.findIndex((c: string[]) =>
+        c.includes(_modelObj.name)
+      );
       if (choiceIdx === -1) {
         try {
           const result = await app.predict(8, [
-            voiceModelUrl, //"https://huggingface.co/nolanaatama/jjsbd10krvcstpsncgm/resolve/main/diobrando.zip",
-            selectedArtist, //"diobrando",
+            _modelObj.url, //"https://huggingface.co/nolanaatama/jjsbd10krvcstpsncgm/resolve/main/diobrando.zip",
+            _modelObj.name, //"diobrando",
           ]);
           setSnackbarMessage((result as any).data[0]);
         } catch (e) {
@@ -217,7 +234,7 @@ function VoiceCover({}: Props) {
       try {
         const generateData = [
           youtubeLink,
-          selectedArtist,
+          _modelObj.name,
           0,
           false,
           1,
@@ -443,9 +460,7 @@ function VoiceCover({}: Props) {
               InputProps={{
                 endAdornment: (
                   <Button
-                    onClick={() => {
-                      onGenerateVoiceCover();
-                    }}
+                    onClick={onGenerateVoiceCover}
                     sx={{
                       background:
                         "linear-gradient(90deg, rgba(84,50,255,1) 0%, rgba(237,50,255,1) 100%)",
@@ -490,7 +505,7 @@ function VoiceCover({}: Props) {
         )} */}
         <Stack alignItems={"center"} gap={1}>
           {progressMsgs.map((msg) => (
-            <Typography>{msg}</Typography>
+            <Typography key={msg}>{msg}</Typography>
           ))}
         </Stack>
         <Box display={"flex"} justifyContent="center">
