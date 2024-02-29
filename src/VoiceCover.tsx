@@ -349,8 +349,27 @@ function VoiceCover({}: Props) {
 
   return (
     <Box px={{ xs: "5%", md: "10%", lg: "15%" }}>
+      <Box py={4} display="flex" justifyContent={"center"}>
+        <img src="/nusic_purple.png" width={140} alt="" />
+      </Box>
       <Stack gap={2}>
-        <Box
+        <Box display={"flex"} justifyContent="center" alignItems="center">
+          <Box width={400}>
+            <FormControl fullWidth>
+              <InputLabel>Voice Models</InputLabel>
+              <Select
+                label="Voice Models"
+                color="info"
+                onChange={(e) => setSelectedArtist(e.target.value as string)}
+              >
+                {Object.keys(voiceCoverMap).map((key) => (
+                  <MenuItem value={key}>{key}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        </Box>
+        {/* <Box
           display={"flex"}
           justifyContent="center"
           alignItems="center"
@@ -388,7 +407,7 @@ function VoiceCover({}: Props) {
               </Typography>
             </Stack>
           ))}
-        </Box>
+        </Box> */}
         <Box>
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
