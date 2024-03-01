@@ -317,7 +317,10 @@ function VoiceCover({}: Props) {
   useEffect(() => {
     if (coverUrl) {
       (async () => {
-        const res = await axios.get(coverUrl, { responseType: "blob" });
+        const res = await axios.get(coverUrl, {
+          responseType: "blob",
+          headers: { Authorization: `Bearer ${hfToken}` },
+        });
         const blob = new Blob([res.data]);
         setLocalCoverUrl(URL.createObjectURL(blob));
       })();
