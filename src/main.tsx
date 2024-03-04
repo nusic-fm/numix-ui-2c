@@ -23,10 +23,10 @@ const router = createHashRouter([
     path: "/fx",
     element: <Fx />,
   },
-  {
-    path: "/voice-cover",
-    element: <VoiceCover />,
-  },
+  // {
+  //   path: "/voice-cover",
+  //   element: <VoiceCover />,
+  // },
 ]);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
