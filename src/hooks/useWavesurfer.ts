@@ -40,14 +40,14 @@ export const useWavesurfer = (
           width: 500,
           //   barGap: 1,
           barHeight: 0.9,
-          plugins: [
-            SpectrogramPlugin.create({
-              labels: true,
-              height: 50,
-              colorMap: colors,
-              labelsColor: "black",
-            }),
-          ],
+          // plugins: [
+          //   SpectrogramPlugin.create({
+          //     labels: true,
+          //     height: 50,
+          //     colorMap: colors,
+          //     labelsColor: "black",
+          //   }),
+          // ],
         }
       : {
           container: containerRef.current,
@@ -59,7 +59,7 @@ export const useWavesurfer = (
           width: 200,
           //   barGap: 1,
           barHeight: 0.6,
-          plugins: [SpectrogramPlugin.create({ labels: true, height: 200 })],
+          // plugins: [SpectrogramPlugin.create({ labels: true, height: 200 })],
         };
     const ws = WaveSurfer.create(wsOptions);
     ws.on("click", () => {
