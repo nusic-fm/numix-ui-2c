@@ -24,6 +24,10 @@ import { useWavesurfer } from "../hooks/useWavesurfer";
 import PowerSettingsNewOutlinedIcon from "@mui/icons-material/PowerSettingsNewOutlined";
 import { FX_PARAMS } from "../App";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import VolumeUpRoundedIcon from "@mui/icons-material/VolumeUpRounded";
+import VolumeOffRoundedIcon from "@mui/icons-material/VolumeOffRounded";
+import LockRoundedIcon from "@mui/icons-material/LockRounded";
+import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 
 const sliderSize = {
   height: "14px",
@@ -82,22 +86,46 @@ const AudioComponent = ({
   const [noWorkletVisible, setNoWorkletVisible] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInstrMuted, setIsInstrMuted] = useState(false);
   const [instrDurationInSec, setInstrDurationInSec] = useState<number>(0);
+  const [isSecondaryInstrReady, setIsSecondaryInstrReady] = useState(false);
 
   const vocalPlayControlRef = useRef<any>(null);
   const vocalPhaseVocoderNodeRef = useRef<any>(null);
   const instrPlayControlRef = useRef<any>(null);
   const instrPhaseVocoderNodeRef = useRef<any>(null);
   const instrGainNodeRef = useRef<null | GainNode>(null);
+  const instr2PlayControlRef = useRef<any>(null);
+  const instr2PhaseVocoderNodeRef = useRef<any>(null);
+  const instr2GainNodeRef = useRef<null | GainNode>(null);
   const delayGainNodeRef = useRef<null | GainNode>(null);
   const reverbGainNodeRef = useRef<null | GainNode>(null);
   const flangerGainNodeRef = useRef<null | GainNode>(null);
   const vocalsGainNodeRef = useRef<null | GainNode>(null);
 
+  const [isOriginalPlaying, setIsOriginalPlaying] = useState(true);
+
+  useEffect(() => {
+    if (instrPlayControlRef.current && instr2PlayControlRef.current) {
+      if (isOriginalPlaying) {
+        if (isPlaying) instr2PlayControlRef.current.stop();
+        instrPlayControlRef.current.seek(
+          vocalPlayControlRef.current.currentPosition
+        );
+        if (isPlaying) instrPlayControlRef.current.start();
+      } else {
+        if (isPlaying) instrPlayControlRef.current.stop();
+        instr2PlayControlRef.current.seek(
+          vocalPlayControlRef.current.currentPosition
+        );
+        if (isPlaying) instr2PlayControlRef.current.start();
+      }
+    }
+  }, [isOriginalPlaying]);
   useEffect(() => {
     const intervalForCursor = setInterval(() => {
-      if (wavesurfer && instrPlayControlRef.current && instrumentalUrl) {
-        const currentPosition = instrPlayControlRef.current.currentPosition;
+      if (wavesurfer && vocalPlayControlRef.current && vocalsUrl) {
+        const currentPosition = vocalPlayControlRef.current.currentPosition;
 
         wavesurfer?.setTime(currentPosition);
       }
@@ -180,24 +208,41 @@ const AudioComponent = ({
   };
 
   const initInstr = async () => {
-    const instrBuffer = await loader.load(instrumentalUrl);
+    if (instrPlayControlRef.current) {
+      const instrBuffer = await loader.load(instrumentalUrl);
+      // Instrumental Setup
+      const [instrPlayerEngine, instrPhaseVocoderNode, instrGainNode] =
+        await setupEngine(instrBuffer);
+      const instrPlayControl = new wavesAudio.PlayControl(instrPlayerEngine);
+      instrPlayControl.setLoopBoundaries(0, instrBuffer.duration);
+      instrPlayControl.loop = true;
 
-    // Instrumental Setup
-    const [instrPlayerEngine, instrPhaseVocoderNode, instrGainNode] =
-      await setupEngine(instrBuffer);
-    const instrPlayControl = new wavesAudio.PlayControl(instrPlayerEngine);
-    instrPlayControl.setLoopBoundaries(0, instrBuffer.duration);
-    instrPlayControl.loop = true;
-    setInstrDurationInSec(instrBuffer.duration);
+      instrGainNode.connect(audioContext.destination);
 
-    instrGainNode.connect(audioContext.destination);
+      instr2GainNodeRef.current = instrGainNode;
+      instr2PlayControlRef.current = instrPlayControl;
+      instr2PlayControlRef.current.speed = speedFactor;
+      instr2PhaseVocoderNodeRef.current = instrPhaseVocoderNode;
+      setIsSecondaryInstrReady(true);
+    } else {
+      const instrBuffer = await loader.load(instrumentalUrl);
+      // Instrumental Setup
+      const [instrPlayerEngine, instrPhaseVocoderNode, instrGainNode] =
+        await setupEngine(instrBuffer);
+      const instrPlayControl = new wavesAudio.PlayControl(instrPlayerEngine);
+      instrPlayControl.setLoopBoundaries(0, instrBuffer.duration);
+      instrPlayControl.loop = true;
+      setInstrDurationInSec(instrBuffer.duration);
 
-    instrGainNodeRef.current = instrGainNode;
-    instrPlayControlRef.current = instrPlayControl;
-    instrPhaseVocoderNodeRef.current = instrPhaseVocoderNode;
-    if (isPlaying) {
-      instrPlayControl.seek(vocalPlayControlRef.current.currentPosition);
-      instrPlayControl.start();
+      instrGainNode.connect(audioContext.destination);
+
+      instrGainNodeRef.current = instrGainNode;
+      instrPlayControlRef.current = instrPlayControl;
+      instrPhaseVocoderNodeRef.current = instrPhaseVocoderNode;
+      if (isPlaying) {
+        instrPlayControl.seek(vocalPlayControlRef.current.currentPosition);
+        instrPlayControl.start();
+      }
     }
   };
 
@@ -296,14 +341,14 @@ const AudioComponent = ({
     <Box
       px={{ xs: "5%", md: "10%", lg: "15%" }}
       sx={{ background: "#000" }}
-      height="100vh"
+      // height="100vh"
       p={4}
     >
-      <Box display={"flex"} justifyContent="end" px={4} mb={2}>
+      {/* <Box display={"flex"} justifyContent="end" px={4} mb={2}>
         <IconButton onClick={onBack}>
           <ArrowBackIcon />
         </IconButton>
-      </Box>
+      </Box> */}
       <Stack sx={{ backgroundColor: "#242424" }} p={4} borderRadius="58px">
         <Box
           display={"flex"}
@@ -337,7 +382,13 @@ const AudioComponent = ({
             <Typography>{selectedGenre}</Typography>
           </Stack>
         </Box>
-        <Box display={"flex"} gap={2} alignItems="center" p={2}>
+        <Box
+          display={"flex"}
+          gap={2}
+          alignItems="center"
+          p={2}
+          position="relative"
+        >
           <Box>
             <Fab
               sx={{
@@ -349,11 +400,13 @@ const AudioComponent = ({
                   audioContext.resume();
                 }
                 if (!isPlaying) {
-                  instrPlayControlRef.current?.start();
+                  if (isOriginalPlaying) instrPlayControlRef.current?.start();
+                  else instr2PlayControlRef.current?.start();
                   vocalPlayControlRef.current.start();
                   setIsPlaying(true);
                 } else {
-                  instrPlayControlRef.current.pause();
+                  if (isOriginalPlaying) instrPlayControlRef.current?.pause();
+                  else instr2PlayControlRef.current?.pause();
                   vocalPlayControlRef.current.pause();
                   setIsPlaying(false);
                 }
@@ -369,7 +422,31 @@ const AudioComponent = ({
             </Fab>
           </Box>
           {instrumentalUrl ? (
-            <div ref={containerRef} style={{ width: "60%" }}></div>
+            <Box display={"flex"} width="100%" height={"100%"}>
+              <Box
+                sx={{ bgcolor: "rgba(0,0,0,0.7)" }}
+                height="60px"
+                width={"40%"}
+                display="flex"
+                alignItems={"center"}
+                justifyContent="center"
+                borderRadius={2}
+              >
+                <LockRoundedIcon />
+              </Box>
+              <div ref={containerRef} style={{ width: "20%" }}></div>
+              <Box
+                sx={{ bgcolor: "rgba(0,0,0,0.7)" }}
+                height="60px"
+                width={100}
+                display="flex"
+                alignItems={"center"}
+                justifyContent="center"
+                borderRadius={2}
+              >
+                <LockRoundedIcon />
+              </Box>
+            </Box>
           ) : (
             <Skeleton
               width={"60%"}
@@ -379,6 +456,27 @@ const AudioComponent = ({
             />
           )}
 
+          {/* <Box
+            width={"calc(60% + 56px)"}
+            position={"absolute"}
+            height="100%"
+            display={"flex"}
+            justifyContent="end"
+            alignItems={"center"}
+            zIndex={99}
+          >
+            <Box
+              sx={{ bgcolor: "rgba(0,0,0,0.7)" }}
+              height="80%"
+              width={100}
+              display="flex"
+              alignItems={"center"}
+              justifyContent="center"
+              borderRadius={2}
+            >
+              <LockRoundedIcon />
+            </Box>
+          </Box> */}
           <Typography variant="caption">
             00:{instrDurationInSec.toFixed(0)}
           </Typography>
@@ -411,35 +509,79 @@ const AudioComponent = ({
           alignItems={"center"}
           justifyContent="space-between"
         >
-          <Chip label="Remix FX" />
-          <IconButton
-            color={warpBypassed ? "error" : "success"}
-            onClick={() => {
-              const newWarpBypassed = !warpBypassed;
-              if (newWarpBypassed) {
-                vocalPhaseVocoderNodeRef.current.parameters.get(
-                  "pitchFactor"
-                ).value = 1.0;
-                instrPhaseVocoderNodeRef.current.parameters.get(
-                  "pitchFactor"
-                ).value = 1.0;
-                vocalPlayControlRef.current.speed = 1.0;
-                instrPlayControlRef.current.speed = 1.0;
-              } else {
-                vocalPhaseVocoderNodeRef.current.parameters.get(
-                  "pitchFactor"
-                ).value = (pitchFactor * 1) / speedFactor;
-                instrPhaseVocoderNodeRef.current.parameters.get(
-                  "pitchFactor"
-                ).value = (pitchFactor * 1) / speedFactor;
-                vocalPlayControlRef.current.speed = speedFactor;
-                instrPlayControlRef.current.speed = speedFactor;
-              }
-              setWarpBypassed(newWarpBypassed);
-            }}
+          <Chip label="Intrument FX" />
+          <Box
+            display="flex"
+            alignItems={"center"}
+            justifyContent="space-between"
           >
-            <PowerSettingsNewOutlinedIcon />
-          </IconButton>
+            <IconButton
+              onClick={() => {
+                setIsOriginalPlaying(!isOriginalPlaying);
+              }}
+              // onClick={() => {
+              //   setIsInstrMuted(!isInstrMuted);
+              //   if (instrGainNodeRef.current)
+              //     instrGainNodeRef.current.gain.value = isInstrMuted ? 1 : 0;
+              // }}
+            >
+              {isSecondaryInstrReady === false ? (
+                <CircularProgress size={18} color="secondary" />
+              ) : isOriginalPlaying ? (
+                <AutoAwesomeRoundedIcon />
+              ) : (
+                <AutoAwesomeRoundedIcon color="primary" />
+              )}
+            </IconButton>
+            <IconButton
+              onClick={() => {
+                setIsInstrMuted(!isInstrMuted);
+                if (isOriginalPlaying && instrGainNodeRef.current) {
+                  instrGainNodeRef.current.gain.value = isInstrMuted ? 1 : 0;
+                } else if (instr2GainNodeRef.current) {
+                  instr2GainNodeRef.current.gain.value = isInstrMuted ? 1 : 0;
+                }
+              }}
+            >
+              {isInstrMuted ? (
+                <VolumeOffRoundedIcon fontSize="small" />
+              ) : (
+                <VolumeUpRoundedIcon fontSize="small" />
+              )}
+            </IconButton>
+            <IconButton
+              color={warpBypassed ? "error" : "success"}
+              onClick={() => {
+                const newWarpBypassed = !warpBypassed;
+                if (newWarpBypassed) {
+                  vocalPhaseVocoderNodeRef.current.parameters.get(
+                    "pitchFactor"
+                  ).value = 1.0;
+                  instrPhaseVocoderNodeRef.current.parameters.get(
+                    "pitchFactor"
+                  ).value = 1.0;
+                  vocalPlayControlRef.current.speed = 1.0;
+                  instrPlayControlRef.current.speed = 1.0;
+                  if (instr2PlayControlRef.current)
+                    instr2PlayControlRef.current.speed = 1.0;
+                } else {
+                  vocalPhaseVocoderNodeRef.current.parameters.get(
+                    "pitchFactor"
+                  ).value = (pitchFactor * 1) / speedFactor;
+                  instrPhaseVocoderNodeRef.current.parameters.get(
+                    "pitchFactor"
+                  ).value = (pitchFactor * 1) / speedFactor;
+                  vocalPlayControlRef.current.speed = speedFactor;
+                  instrPlayControlRef.current.speed = speedFactor;
+                  if (instr2PlayControlRef.current)
+                    instr2PlayControlRef.current.speed = speedFactor;
+                }
+                setWarpBypassed(newWarpBypassed);
+              }}
+            >
+              <PowerSettingsNewOutlinedIcon />
+            </IconButton>
+          </Box>
         </Box>
         <Box display={"flex"} justifyContent="center" gap={2} my={2} px={2}>
           <Stack width={200} flexBasis="50%">
@@ -474,6 +616,10 @@ const AudioComponent = ({
                 instrPlayControlRef.current.speed = warpBypassed
                   ? 1.0
                   : newSpeedFactor;
+                if (instr2PlayControlRef.current)
+                  instr2PlayControlRef.current.speed = warpBypassed
+                    ? 1.0
+                    : newSpeedFactor;
                 vocalPitchFactorParam.value = warpBypassed
                   ? 1.0
                   : (pitchFactor * 1) / speedFactor;
@@ -669,7 +815,7 @@ const AudioComponent = ({
           </Stack>
         </Box>
       </Stack>
-      <Box mt={4} display={"flex"} justifyContent="center">
+      {/* <Box mt={4} display={"flex"} justifyContent="center">
         <Button
           variant="outlined"
           color="info"
@@ -689,7 +835,7 @@ const AudioComponent = ({
         >
           Finish
         </Button>
-      </Box>
+      </Box> */}
     </Box>
   );
 

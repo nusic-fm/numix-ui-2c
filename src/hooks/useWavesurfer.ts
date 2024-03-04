@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import WaveSurfer from "wavesurfer.js";
+import SpectrogramPlugin from "wavesurfer.js/dist/plugins/spectrogram";
+import colormap from "colormap";
 
-export const useWavesurfer = (containerRef: any, audioUrl: string) => {
+export const useWavesurfer = (
+  containerRef: any,
+  audioUrl: string,
+  options?: boolean
+) => {
   const [wavesurfer, setWavesurfer] = useState<null | WaveSurfer>(null);
 
   // Initialize wavesurfer when the container mounts
@@ -18,15 +24,46 @@ export const useWavesurfer = (containerRef: any, audioUrl: string) => {
     //     ...options,
     //     container: containerRef.current,
     //   });
-    const ws = WaveSurfer.create({
-      container: containerRef.current,
-      //   waveColor: gradient,
-      barWidth: 2,
-      progressColor: gradient,
-      url: audioUrl,
-      height: 60,
-      //   barGap: 1,
-      barHeight: 0.6,
+    const colors = colormap({
+      colormap: "hot",
+      nshades: 256,
+      format: "float",
+    });
+    const wsOptions = options
+      ? {
+          container: containerRef.current,
+          //   waveColor: gradient,
+          barWidth: 2,
+          progressColor: gradient,
+          url: audioUrl,
+          height: 100,
+          width: 500,
+          //   barGap: 1,
+          barHeight: 0.9,
+          // plugins: [
+          //   SpectrogramPlugin.create({
+          //     labels: true,
+          //     height: 50,
+          //     colorMap: colors,
+          //     labelsColor: "black",
+          //   }),
+          // ],
+        }
+      : {
+          container: containerRef.current,
+          //   waveColor: gradient,
+          barWidth: 2,
+          progressColor: gradient,
+          url: audioUrl,
+          height: 60,
+          width: 200,
+          //   barGap: 1,
+          barHeight: 0.6,
+          // plugins: [SpectrogramPlugin.create({ labels: true, height: 200 })],
+        };
+    const ws = WaveSurfer.create(wsOptions);
+    ws.on("click", () => {
+      ws?.play();
     });
 
     setWavesurfer(ws);

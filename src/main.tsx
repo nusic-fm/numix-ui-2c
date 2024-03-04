@@ -12,6 +12,7 @@ import {
   // Link,
 } from "react-router-dom";
 import Fx from "./Fx";
+import VoiceCover from "./VoiceCover";
 
 const router = createHashRouter([
   {
@@ -21,6 +22,10 @@ const router = createHashRouter([
   {
     path: "/fx",
     element: <Fx />,
+  },
+  {
+    path: "/voice-cover",
+    element: <VoiceCover />,
   },
 ]);
 
