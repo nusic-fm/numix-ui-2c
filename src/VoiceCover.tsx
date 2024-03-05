@@ -23,12 +23,13 @@ import {
   LinearProgress,
   Tab,
   Tabs,
+  ListSubheader,
+  ListSubheaderProps,
 } from "@mui/material";
 import { Box } from "@mui/system";
 import { useEffect, useRef, useState } from "react";
 // import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import CloseIcon from "@mui/icons-material/Close";
-import { voiceCoverMap } from "./App";
 import SettingsRounded from "@mui/icons-material/SettingsRounded";
 import axios from "axios";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -63,8 +64,25 @@ const machineTypes = {
   },
 };
 
+export const voiceCoverLinks = [
+  "eminem-new-era",
+  "trump",
+  "CartmanClassico",
+  "Elvis_model",
+  "GreenDay300",
+  "KanyeWestGraduation",
+  "mcdoor",
+];
+
 const getSpaceId = (userName: string, spaceId: string) =>
   `${userName}/${spaceId}`;
+
+const MyListSubheader = (
+  props: ListSubheaderProps & { muiSkipListHighlight: boolean }
+) => {
+  const { muiSkipListHighlight, ...other } = props;
+  return <ListSubheader {...other} />;
+};
 
 function VoiceCover({}: Props) {
   const [showAccountSetup, setShowAccountSetup] = useState(false);
@@ -83,6 +101,7 @@ function VoiceCover({}: Props) {
     const idx = parseInt(window.localStorage.getItem("TAB_IDX") ?? "0");
     return idx === 0 ? GPU_SPACE_ID : CPU_SPACE_ID;
   });
+  const [voiceModelChoices, setVoiceModelChoices] = useState<string[]>();
 
   const [uploadedFile, setUploadedFile] = useState<File>();
 
@@ -163,6 +182,19 @@ function VoiceCover({}: Props) {
       setSettingsLoading(false);
     }
   };
+
+  const getModelChoices = async (app?: any) => {
+    const _client = app
+      ? app
+      : await client(getSpaceId(userName, spaceId), {
+          hf_token: hfToken as `hf_${string}`,
+        });
+    const choicesResult = await _client.predict(5, []);
+    const choices = (choicesResult as any).data[0].choices;
+    setVoiceModelChoices(choices);
+    return choices;
+  };
+
   const onDuplicateSpace = async () => {
     try {
       setSettingsLoading(true);
@@ -208,6 +240,24 @@ function VoiceCover({}: Props) {
       await checkSpace();
     }
     setSettingsLoading(false);
+  };
+  const onUpgradeSpace = async () => {
+    setSettingsLoading(true);
+    const formData = new FormData();
+    formData.append("space_id", getSpaceId(userName, spaceId));
+    formData.append("hf_token", hfToken);
+    formData.append("hardware", machineType);
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_AUDIO_ANALYSER_PY}/upgrade-space`,
+        formData
+      );
+      await checkSpace();
+    } catch (e) {
+      setErrorSnackbarMessage("Error upgrading, make sure billing is setup");
+    } finally {
+      setSettingsLoading(false);
+    }
   };
 
   const onDropMusicUpload = async (acceptedFiles: File[]) => {
@@ -255,12 +305,9 @@ function VoiceCover({}: Props) {
       setProgressMsgs([]);
 
       setIsGenerating(true);
-      const app = await client(getSpaceId(userName, spaceId), {
-        hf_token: hfToken as `hf_${string}`,
-      });
       const _modelObj = { url: "", name: "" };
       if (selectedArtist) {
-        const name = (voiceCoverMap as any)[selectedArtist][0];
+        const name = selectedArtist;
         const voiceModelUrl = `https://firebasestorage.googleapis.com/v0/b/nusic-dao-website.appspot.com/o/${name}.zip?alt=media`;
         _modelObj.url = voiceModelUrl;
         _modelObj.name = name;
@@ -269,8 +316,10 @@ function VoiceCover({}: Props) {
         _modelObj.name = voiceModelProps.name;
       }
 
-      const choicesResult = await app.predict(5, []);
-      const choices = (choicesResult as any).data[0].choices;
+      const app = await client(getSpaceId(userName, spaceId), {
+        hf_token: hfToken as `hf_${string}`,
+      });
+      const choices = await getModelChoices(app);
       const choiceIdx = choices.findIndex((c: string[]) =>
         c.includes(_modelObj.name)
       );
@@ -386,6 +435,7 @@ function VoiceCover({}: Props) {
   useEffect(() => {
     if (hfToken && userName && spaceId) {
       checkSpace();
+      getModelChoices();
     }
   }, [hfToken, userName, spaceId, showSettings]);
 
@@ -413,7 +463,7 @@ function VoiceCover({}: Props) {
       </Box>
       <Stack gap={2}>
         <Box display={"flex"} justifyContent="center" alignItems="center">
-          <Box width={400}>
+          <Box width={400} display="flex">
             <FormControl fullWidth>
               <InputLabel>Voice Models</InputLabel>
               <Select
@@ -422,13 +472,34 @@ function VoiceCover({}: Props) {
                 value={selectedArtist}
                 onChange={(e) => setSelectedArtist(e.target.value as string)}
               >
-                {Object.keys(voiceCoverMap).map((key) => (
+                {!!voiceModelChoices && (
+                  <MyListSubheader muiSkipListHighlight>Loaded</MyListSubheader>
+                )}
+
+                {!!voiceModelChoices &&
+                  voiceModelChoices.map(([key]) => (
+                    <MenuItem value={key} key={key}>
+                      {key}
+                    </MenuItem>
+                  ))}
+                {!!voiceModelChoices && (
+                  <MyListSubheader muiSkipListHighlight>
+                    Available Links
+                  </MyListSubheader>
+                )}
+                {voiceCoverLinks.map((key) => (
                   <MenuItem value={key} key={key}>
                     {key}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
+            {/* <IconButton
+              onClick={async () => {
+              }}
+            >
+              <RefreshRounded />
+            </IconButton> */}
           </Box>
         </Box>
         {/* <Box
@@ -816,29 +887,14 @@ function VoiceCover({}: Props) {
                         )}
                       </Select>
                     </FormControl>
-                    <Button
+                    <LoadingButton
                       variant="outlined"
                       color="warning"
-                      onClick={async () => {
-                        setSettingsLoading(true);
-                        const formData = new FormData();
-                        formData.append(
-                          "space_id",
-                          getSpaceId(userName, spaceId)
-                        );
-                        formData.append("hf_token", hfToken);
-                        formData.append("hardware", machineType);
-                        await axios.post(
-                          `${
-                            import.meta.env.VITE_GPU_REMIX_SERVER
-                          }/upgrade-space`,
-                          formData
-                        );
-                        setSettingsLoading(false);
-                      }}
+                      loading={settingsLoading}
+                      onClick={onUpgradeSpace}
                     >
                       Upgrade
-                    </Button>
+                    </LoadingButton>
                   </Box>
                 )}
               </Stack>
@@ -969,23 +1025,7 @@ function VoiceCover({}: Props) {
                     <Button
                       variant="outlined"
                       color="warning"
-                      onClick={async () => {
-                        setSettingsLoading(true);
-                        const formData = new FormData();
-                        formData.append(
-                          "space_id",
-                          getSpaceId(userName, spaceId)
-                        );
-                        formData.append("hf_token", hfToken);
-                        formData.append("hardware", machineType);
-                        await axios.post(
-                          `${
-                            import.meta.env.VITE_GPU_REMIX_SERVER
-                          }/upgrade-space`,
-                          formData
-                        );
-                        setSettingsLoading(false);
-                      }}
+                      onClick={onUpgradeSpace}
                     >
                       Upgrade
                     </Button>
