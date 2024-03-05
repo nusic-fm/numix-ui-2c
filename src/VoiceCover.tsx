@@ -26,7 +26,7 @@ import {
 } from "@mui/material";
 import { Box } from "@mui/system";
 import { useEffect, useRef, useState } from "react";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+// import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import CloseIcon from "@mui/icons-material/Close";
 import { voiceCoverMap } from "./App";
 import SettingsRounded from "@mui/icons-material/SettingsRounded";
@@ -42,6 +42,8 @@ import PauseRounded from "@mui/icons-material/PauseRounded";
 import PlayRounded from "@mui/icons-material/PlayArrowRounded";
 import DownloadRounded from "@mui/icons-material/DownloadRounded";
 import { LoadingButton } from "@mui/lab";
+import Uploader from "./components/Uploader";
+import CheckIcon from "@mui/icons-material/Check";
 
 type Props = {};
 
@@ -82,12 +84,15 @@ function VoiceCover({}: Props) {
     return idx === 0 ? GPU_SPACE_ID : CPU_SPACE_ID;
   });
 
+  const [uploadedFile, setUploadedFile] = useState<File>();
+
   // const [spaceExists, setSpaceExists] = useState(false);
   // const [isSpaceRunning, setIsSpaceRunning] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [errorSnackbarMessage, setErrorSnackbarMessage] = useState("");
 
   const [youtubeLink, setYoutubeLink] = useState("");
+  const [inputSongUrl, setInputSongUrl] = useState("");
   // const [inputFile, setInputFile] = useState<File>();
   // const [inputUrl, setInputUrl] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -205,17 +210,28 @@ function VoiceCover({}: Props) {
     setSettingsLoading(false);
   };
 
-  // const onDropMusicUpload = async (acceptedFiles: File[]) => {
-  //   if (!selectedArtist) {
-  //     alert("Select a voice model and drop the file again");
-  //     return;
-  //   }
-  //   if (acceptedFiles.length && !isProcessing) {
-  //     const melody = acceptedFiles[0];
-  //     setInputFile(melody);
-  //     setInputUrl(URL.createObjectURL(melody));
-  //   }
-  // };
+  const onDropMusicUpload = async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length && !isGenerating) {
+      setIsGenerating(true);
+      const melody = acceptedFiles[0];
+      setUploadedFile(melody);
+      const url = `https://${userName}-${spaceId}.hf.space/upload`;
+      const formData = new FormData();
+      formData.append("files", melody);
+      try {
+        const res = await axios.post(url, formData, {
+          headers: { Authorization: `Bearer ${hfToken}` },
+        });
+        const filePath = res.data[0];
+        setInputSongUrl(filePath);
+        setYoutubeLink("");
+      } catch (e) {
+        setErrorSnackbarMessage("Error uploading the file, try again later");
+      } finally {
+        setIsGenerating(false);
+      }
+    }
+  };
 
   const onGenerateVoiceCover = async () => {
     if (hfToken) {
@@ -230,7 +246,7 @@ function VoiceCover({}: Props) {
         );
         return;
       }
-      if (!youtubeLink) {
+      if (!inputSongUrl) {
         setErrorSnackbarMessage("Enter a Youtube link");
         return;
       }
@@ -272,7 +288,7 @@ function VoiceCover({}: Props) {
       // const voiceModelName = selectedArtist;
       try {
         const generateData = [
-          youtubeLink,
+          inputSongUrl,
           _modelObj.name,
           0,
           false,
@@ -294,7 +310,6 @@ function VoiceCover({}: Props) {
           "mp3",
         ];
         // const genResult = await app.predict(6, generateData);
-
         //nusic-nusic-voicecovergen.hf.space/file=/tmp/gradio/7a16847668b16521ddd40585cab98614ad86bbd8/Short%20Song%20English%20Song%20W%20Lyrics%2030%20seconds%20Test%20Ver.mp3
         // const audioUrl = `https://nusic-nusic-voicecovergen.hf.space/file=${
         //   (genResult as any).data[0].name
@@ -322,7 +337,9 @@ function VoiceCover({}: Props) {
           if (event.stage === "pending") {
             const _progressData = event?.progress_data?.at(0);
             setGenerationProgress((_progressData?.progress ?? 0) * 100);
-            setProgressMsgs((msg) => [...msg, _progressData?.desc ?? ""]);
+            setProgressMsgs((msg) =>
+              [...msg, _progressData?.desc ?? ""].filter((msg) => msg.length)
+            );
           }
           if (event.stage === "pending" && event.eta) {
             setEta(event.eta);
@@ -519,36 +536,23 @@ function VoiceCover({}: Props) {
               color="secondary"
               value={youtubeLink}
               onChange={(e) => {
-                if (!isGenerating) setYoutubeLink(e.target.value);
-              }}
-              InputProps={{
-                endAdornment: (
-                  <Button
-                    onClick={onGenerateVoiceCover}
-                    sx={{
-                      background:
-                        "linear-gradient(90deg, rgba(84,50,255,1) 0%, rgba(237,50,255,1) 100%)",
-                    }}
-                  >
-                    {isGenerating ? (
-                      <CircularProgress color="secondary" size={"24px"} />
-                    ) : (
-                      <ArrowForwardIcon color="secondary" />
-                    )}
-                  </Button>
-                ),
+                if (!isGenerating) {
+                  setYoutubeLink(e.target.value);
+                  setInputSongUrl(e.target.value);
+                  setUploadedFile(undefined);
+                }
               }}
             />
           </Box>
-          {/* <Box flexBasis={{ xs: "100%", md: "30%" }}>
+          <Box flexBasis={{ xs: "100%", md: "30%" }}>
             <Uploader
               onDrop={onDropMusicUpload}
-              melodyFile={inputFile}
+              melodyFile={uploadedFile}
               initializeTone={() => {}}
               playAudio={() => {}}
               vid={""}
             />
-          </Box> */}
+          </Box>
           <IconButton
             onClick={() => setShowSettings(true)}
             color={
@@ -562,6 +566,20 @@ function VoiceCover({}: Props) {
             <SettingsRounded />
           </IconButton>
         </Box>
+        <Box display={"flex"} justifyContent="center" my={2}>
+          <LoadingButton
+            loading={isGenerating}
+            onClick={onGenerateVoiceCover}
+            sx={{
+              background:
+                "linear-gradient(90deg, rgba(84,50,255,1) 0%, rgba(237,50,255,1) 100%)",
+              color: "white",
+            }}
+            size="large"
+          >
+            Generate
+          </LoadingButton>
+        </Box>
         {/* {!!eta && (
           <Box display={"flex"} justifyContent="center">
             <Typography>ETA: {eta}</Typography>
@@ -569,7 +587,14 @@ function VoiceCover({}: Props) {
         )} */}
         <Stack alignItems={"center"} gap={1}>
           {progressMsgs.map((msg) => (
-            <Typography key={msg}>{msg}</Typography>
+            <Alert
+              key={msg}
+              icon={<CheckIcon fontSize="inherit" />}
+              severity="success"
+            >
+              {msg}
+            </Alert>
+            // <Typography key={msg}>{msg}</Typography>
           ))}
         </Stack>
         <Box display={"flex"} justifyContent="center">

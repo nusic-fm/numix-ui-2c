@@ -17,9 +17,9 @@ export const useWavesurfer = (
 
     const ctx = document.createElement("canvas").getContext("2d") as any;
     const gradient = ctx.createLinearGradient(0, 0, 0, 150);
-    gradient.addColorStop(0.2, "#2B00FF");
-    gradient.addColorStop(0.4, "#73D5EB");
-    gradient.addColorStop(0.6, "#EB00FF");
+    gradient.addColorStop(0.4, "#5432ff");
+    gradient.addColorStop(0.67, "#73D5EB");
+    gradient.addColorStop(0.9, "#EB00FF");
     //   const ws = WaveSurfer.create({
     //     ...options,
     //     container: containerRef.current,
