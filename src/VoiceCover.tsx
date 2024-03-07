@@ -45,6 +45,7 @@ import DownloadRounded from "@mui/icons-material/DownloadRounded";
 import { LoadingButton } from "@mui/lab";
 import Uploader from "./components/Uploader";
 import CheckIcon from "@mui/icons-material/Check";
+import { logFirebaseEvent } from "./services/firebase.service";
 
 type Props = {};
 
@@ -90,6 +91,7 @@ function VoiceCover({}: Props) {
   const [enteredAccessToken, setEnteredAccessToken] = useState("");
   const [hfToken, setHfToken] = useState("");
   const [userName, setUserName] = useState("");
+  const [userId, setUserId] = useState("");
   const [gpuSpaceAvailable, setGpuSpaceAvailable] = useState(false);
   const [cpuSpaceAvailable, setCpuSpaceAvailable] = useState(false);
   const [settingsLoading, setSettingsLoading] = useState(false);
@@ -101,7 +103,7 @@ function VoiceCover({}: Props) {
     const idx = parseInt(window.localStorage.getItem("TAB_IDX") ?? "0");
     return idx === 0 ? GPU_SPACE_ID : CPU_SPACE_ID;
   });
-  const [voiceModelChoices, setVoiceModelChoices] = useState<string[]>();
+  const [voiceModelChoices, setVoiceModelChoices] = useState<string[][]>();
 
   const [uploadedFile, setUploadedFile] = useState<File>();
 
@@ -125,6 +127,7 @@ function VoiceCover({}: Props) {
   const [localCoverUrl, setLocalCoverUrl] = useState("");
   const [voiceModelProps, setVoiceModelProps] = useState({ url: "", name: "" });
   const [eta, setEta] = useState(0);
+  const [queueData, setQueueData] = useState("");
 
   const [progressMsgs, setProgressMsgs] = useState<string[]>([]);
   const [generationProgress, setGenerationProgress] = useState(0);
@@ -141,11 +144,13 @@ function VoiceCover({}: Props) {
         credentials: { accessToken: enteredAccessToken },
       });
       const _userName = user.name;
+      const _userId = user.id;
 
       window.localStorage.setItem("HF_AT", enteredAccessToken);
       setHfToken(enteredAccessToken);
       // setUserName(_userName.endsWith("nusic") ? "nusic" : _userName); // user.name "nusic"
       setUserName(_userName); // user.name "nusic"
+      setUserId(_userId);
       setShowAccountSetup(false);
     } catch (e) {
       setShowAccountSetup(true);
@@ -183,16 +188,38 @@ function VoiceCover({}: Props) {
     }
   };
 
-  const getModelChoices = async (app?: any) => {
-    const _client = app
-      ? app
-      : await client(getSpaceId(userName, spaceId), {
-          hf_token: hfToken as `hf_${string}`,
+  const getModelChoices = async () => {
+    const _client = await client(getSpaceId(userName, spaceId), {
+      hf_token: hfToken as `hf_${string}`,
+    });
+    const choicesSubmit = _client.submit(5, []);
+    try {
+      const choices = await new Promise((res, rej) => {
+        choicesSubmit.on("status", (status) => {
+          console.log(status);
+          if (status.size) {
+            setQueueData(`${(status.position ?? 0) + 1}/${status.size}`);
+          }
+          if (status.stage === "error") {
+            rej("");
+          }
         });
-    const choicesResult = await _client.predict(5, []);
-    const choices = (choicesResult as any).data[0].choices;
-    setVoiceModelChoices(choices);
-    return choices;
+        choicesSubmit.on("data", (event) => {
+          console.log("data: ", event);
+          if (event.data.length) {
+            const choices = (event.data[0] as any).choices as any;
+            if (choices) {
+              res(choices);
+            }
+          }
+        });
+      });
+      setVoiceModelChoices(choices as string[][]);
+      return choices as string[][];
+    } catch (e) {
+      setErrorSnackbarMessage("Error occured, try again later");
+    }
+    return [];
   };
 
   const onDuplicateSpace = async () => {
@@ -315,11 +342,15 @@ function VoiceCover({}: Props) {
         _modelObj.url = voiceModelProps.url;
         _modelObj.name = voiceModelProps.name;
       }
-
+      logFirebaseEvent("select_content", {
+        content_type: "generate",
+        content_id: inputSongUrl,
+      });
+      //TODO
       const app = await client(getSpaceId(userName, spaceId), {
         hf_token: hfToken as `hf_${string}`,
       });
-      const choices = await getModelChoices(app);
+      const choices = await getModelChoices();
       const choiceIdx = choices.findIndex((c: string[]) =>
         c.includes(_modelObj.name)
       );
@@ -356,7 +387,7 @@ function VoiceCover({}: Props) {
           0.2,
           0.8,
           0.7,
-          "mp3",
+          "wav",
         ];
         // const genResult = await app.predict(6, generateData);
         //nusic-nusic-voicecovergen.hf.space/file=/tmp/gradio/7a16847668b16521ddd40585cab98614ad86bbd8/Short%20Song%20English%20Song%20W%20Lyrics%2030%20seconds%20Test%20Ver.mp3
@@ -383,6 +414,9 @@ function VoiceCover({}: Props) {
           // queue = true
           // size = 1
           console.log("status: ", event);
+          if (event.stage === "error") {
+            setErrorSnackbarMessage("Error Occurred, try again later");
+          }
           if (event.stage === "pending") {
             const _progressData = event?.progress_data?.at(0);
             setGenerationProgress((_progressData?.progress ?? 0) * 100);
@@ -390,8 +424,12 @@ function VoiceCover({}: Props) {
               [...msg, _progressData?.desc ?? ""].filter((msg) => msg.length)
             );
           }
+          if (event.size) {
+            setQueueData(`${(event.position ?? 0) + 1}/${event.size}`);
+          }
           if (event.stage === "pending" && event.eta) {
             setEta(event.eta);
+
             // {
             //     eta: event.eta,
             //     position: event.position,
@@ -472,17 +510,17 @@ function VoiceCover({}: Props) {
                 value={selectedArtist}
                 onChange={(e) => setSelectedArtist(e.target.value as string)}
               >
-                {!!voiceModelChoices && (
+                {!!voiceModelChoices?.length && (
                   <MyListSubheader muiSkipListHighlight>Loaded</MyListSubheader>
                 )}
 
-                {!!voiceModelChoices &&
+                {!!voiceModelChoices?.length &&
                   voiceModelChoices.map(([key]) => (
                     <MenuItem value={key} key={key}>
                       {key}
                     </MenuItem>
                   ))}
-                {!!voiceModelChoices && (
+                {!!voiceModelChoices?.length && (
                   <MyListSubheader muiSkipListHighlight>
                     Available Links
                   </MyListSubheader>
@@ -637,7 +675,13 @@ function VoiceCover({}: Props) {
             <SettingsRounded />
           </IconButton>
         </Box>
-        <Box display={"flex"} justifyContent="center" my={2}>
+        <Box
+          display={"flex"}
+          justifyContent="center"
+          my={2}
+          alignItems="center"
+          gap={1}
+        >
           <LoadingButton
             loading={isGenerating}
             onClick={onGenerateVoiceCover}
@@ -650,6 +694,9 @@ function VoiceCover({}: Props) {
           >
             Generate
           </LoadingButton>
+          {isGenerating && (
+            <Typography variant="caption">{queueData}</Typography>
+          )}
         </Box>
         {/* {!!eta && (
           <Box display={"flex"} justifyContent="center">
