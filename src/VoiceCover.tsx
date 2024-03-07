@@ -133,6 +133,8 @@ function VoiceCover({}: Props) {
   const [generationProgress, setGenerationProgress] = useState(0);
   const [showAt, setShowAt] = useState(false);
   const [hfStatus, setHfStatus] = useState<string>();
+  const [txHash, setTxHash] = useState<string>();
+  const [hashedAudioUrl, setHashedAudioUrl] = useState<string>();
 
   const containerRef = useRef(null);
   const wavesurfer = useWavesurfer(containerRef, localCoverUrl, true);
@@ -345,6 +347,7 @@ function VoiceCover({}: Props) {
       logFirebaseEvent("select_content", {
         content_type: "generate",
         content_id: inputSongUrl,
+        model_url: _modelObj.url,
       });
       //TODO
       const app = await client(getSpaceId(userName, spaceId), {
@@ -405,6 +408,11 @@ function VoiceCover({}: Props) {
               const audioUrl = `https://${userName}-${spaceId}.hf.space/file=${_name}`;
               setCoverUrl(audioUrl);
               setGenerationProgress(0);
+              logFirebaseEvent("select_content", {
+                content_type: "complete",
+                content_id: inputSongUrl,
+                model_url: _modelObj.url,
+              });
             }
           }
         });
@@ -438,6 +446,18 @@ function VoiceCover({}: Props) {
           }
           //|| event.stage === "complete"
         });
+        // TODO: Blockchain hash
+        // try {
+        //   const res = await axios.post(
+        //     `${import.meta.env.VITE_BLOCKCHAIN_SERVER}/deploy-model-contract`,
+        //     {
+        //       user_id: userId,
+        //       model_url: _modelObj.url,
+        //       model_name: _modelObj.name,
+        //     }
+        //   );
+        //   setTxHash(res.data.txHash);
+        // } catch (e) {}
       } catch (e) {
       } finally {
         setIsGenerating(false);
@@ -457,6 +477,18 @@ function VoiceCover({}: Props) {
     // {"msg":"process_completed","output":{"data":[{"orig_name":"noreturn_chorus_16s 1.wav","name":"/tmp/gradio/8db15c9c74acd78c78be88ff4d2c6a16b9099eb2/noreturn_chorus_16s 1.wav","size":512078,"data":null,"is_file":true},{"value":"/tmp/gradio/8db15c9c74acd78c78be88ff4d2c6a16b9099eb2/noreturn_chorus_16s 1.wav","__type__":"update"}],"is_generating":false,"duration":0.0005247592926025391,"average_duration":0.0005247592926025391},"success":true}
   };
 
+  const hashAndDownload = async () => {
+    if (txHash) {
+      const res = await axios.post(
+        `${import.meta.env.VITE_AUDIO_ANALYSER_PY}/encode-hash`,
+        { hash: txHash },
+        { responseType: "blob" }
+      );
+      const hashedBlob = new Blob([res.data]);
+      setHashedAudioUrl(URL.createObjectURL(hashedBlob));
+    }
+  };
+
   useEffect(() => {
     if (coverUrl) {
       (async () => {
@@ -466,6 +498,7 @@ function VoiceCover({}: Props) {
         });
         const blob = new Blob([res.data]);
         setLocalCoverUrl(URL.createObjectURL(blob));
+        hashAndDownload();
       })();
     }
   }, [coverUrl]);
@@ -752,8 +785,8 @@ function VoiceCover({}: Props) {
                 <IconButton
                   onClick={() => {
                     const a = document.createElement("a");
-                    a.href = localCoverUrl;
-                    a.download = `${selectedArtist}_nusic_cover.mp3`;
+                    a.href = hashedAudioUrl ?? localCoverUrl;
+                    a.download = `${selectedArtist}_nusic_cover.mp3`; //TODO: get youtube song name
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
