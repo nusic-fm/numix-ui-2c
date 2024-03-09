@@ -32,7 +32,7 @@ const themeSettings = createTheme({
       main: "#141414",
       border: "#272727",
     },
-    background: { paper: "#000" },
+    // background: { paper: "#000" },
   },
   typography: {
     allVariants: {

@@ -25,6 +25,7 @@ import {
   Tabs,
   ListSubheader,
   ListSubheaderProps,
+  Autocomplete,
 } from "@mui/material";
 import { Box } from "@mui/system";
 import { useEffect, useRef, useState } from "react";
@@ -46,6 +47,9 @@ import { LoadingButton } from "@mui/lab";
 import Uploader from "./components/Uploader";
 import CheckIcon from "@mui/icons-material/Check";
 import { logFirebaseEvent } from "./services/firebase.service";
+// import VoiceModelsAutoComplete from "./components/VoiceModelsAutoComplete";
+import VoiceModelSelection from "./components/VoiceModelSelection";
+import { createVoiceModelDoc } from "./services/db/voiceModels.service";
 
 type Props = {};
 
@@ -118,7 +122,7 @@ function VoiceCover({}: Props) {
   // const [inputUrl, setInputUrl] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   // const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [selectedArtist, setSelectedArtist] = useState("");
+  // const [selectedArtist, setSelectedArtist] = useState("");
   const [machineType, setMachineType] = useState("");
   const [coverUrl, setCoverUrl] = useState(
     ""
@@ -319,10 +323,9 @@ function VoiceCover({}: Props) {
         await checkSpace();
         return;
       }
-      if (!selectedArtist && !(voiceModelProps.url && voiceModelProps.name)) {
-        setErrorSnackbarMessage(
-          "Select a voice model or provide a custom model"
-        );
+      // if (!selectedArtist && !(voiceModelProps.url && voiceModelProps.name)) {
+      if (!(voiceModelProps.url && voiceModelProps.name)) {
+        setErrorSnackbarMessage("provide a voice model url and name");
         return;
       }
       if (!inputSongUrl) {
@@ -332,22 +335,23 @@ function VoiceCover({}: Props) {
       // Reset State:
       setCoverUrl("");
       setProgressMsgs([]);
+      setHashedAudioUrl("");
 
       setIsGenerating(true);
-      const _modelObj = { url: "", name: "" };
-      if (selectedArtist) {
-        const name = selectedArtist;
-        const voiceModelUrl = `https://firebasestorage.googleapis.com/v0/b/nusic-dao-website.appspot.com/o/${name}.zip?alt=media`;
-        _modelObj.url = voiceModelUrl;
-        _modelObj.name = name;
-      } else {
-        _modelObj.url = voiceModelProps.url;
-        _modelObj.name = voiceModelProps.name;
-      }
+      const _modelObj = { ...voiceModelProps };
+      // if (selectedArtist) {
+      //   const name = selectedArtist;
+      //   const voiceModelUrl = `https://firebasestorage.googleapis.com/v0/b/nusic-dao-website.appspot.com/o/${name}.zip?alt=media`;
+      //   _modelObj.url = voiceModelUrl;
+      //   _modelObj.name = name;
+      // } else {
+      //   _modelObj.url = voiceModelProps.url;
+      //   _modelObj.name = voiceModelProps.name;
+      // }
       logFirebaseEvent("select_content", {
         content_type: "generate",
-        content_id: inputSongUrl,
-        model_url: _modelObj.url,
+        content_id: voiceModelProps.name,
+        model_url: voiceModelProps.url,
       });
       //TODO
       const app = await client(getSpaceId(userName, spaceId), {
@@ -368,7 +372,6 @@ function VoiceCover({}: Props) {
           console.log(e);
         }
       }
-      // const voiceModelName = selectedArtist;
       try {
         const generateData = [
           inputSongUrl,
@@ -446,6 +449,24 @@ function VoiceCover({}: Props) {
           }
           //|| event.stage === "complete"
         });
+        // Save Voice Models
+        try {
+          const modelSizeFormData = new FormData();
+          modelSizeFormData.append("url", voiceModelProps.url);
+          const modelSizeRes = await axios.post(
+            `${import.meta.env.VITE_AUDIO_ANALYSER_PY}/model-size`,
+            modelSizeFormData
+          );
+          const size = modelSizeRes.data.size;
+          await createVoiceModelDoc({
+            size,
+            model_url: voiceModelProps.url,
+            model_name: voiceModelProps.name,
+            user_id: userId,
+          });
+        } catch (e) {
+          setErrorSnackbarMessage("Error with the model download url");
+        }
         // TODO: Blockchain hash
         // try {
         //   const res = await axios.post(
@@ -486,6 +507,7 @@ function VoiceCover({}: Props) {
       );
       const hashedBlob = new Blob([res.data]);
       setHashedAudioUrl(URL.createObjectURL(hashedBlob));
+      return hashedBlob;
     }
   };
 
@@ -498,7 +520,6 @@ function VoiceCover({}: Props) {
         });
         const blob = new Blob([res.data]);
         setLocalCoverUrl(URL.createObjectURL(blob));
-        hashAndDownload();
       })();
     }
   }, [coverUrl]);
@@ -506,7 +527,7 @@ function VoiceCover({}: Props) {
   useEffect(() => {
     if (hfToken && userName && spaceId) {
       checkSpace();
-      getModelChoices();
+      // getModelChoices();
     }
   }, [hfToken, userName, spaceId, showSettings]);
 
@@ -528,12 +549,12 @@ function VoiceCover({}: Props) {
   }, [enteredAccessToken]);
 
   return (
-    <Box px={{ xs: "5%", md: "10%", lg: "15%" }}>
+    <Box px={{ xs: "5%", md: "10%", lg: "13%" }}>
       <Box py={4} display="flex" justifyContent={"center"}>
-        <img src="/nusic_purple.png" width={140} alt="" />
+        <img src="/nusic_purple.png" width={160} alt="" />
       </Box>
       <Stack gap={2}>
-        <Box display={"flex"} justifyContent="center" alignItems="center">
+        {/* <Box display={"flex"} justifyContent="center" alignItems="center">
           <Box width={400} display="flex">
             <FormControl fullWidth>
               <InputLabel>Voice Models</InputLabel>
@@ -565,14 +586,8 @@ function VoiceCover({}: Props) {
                 ))}
               </Select>
             </FormControl>
-            {/* <IconButton
-              onClick={async () => {
-              }}
-            >
-              <RefreshRounded />
-            </IconButton> */}
           </Box>
-        </Box>
+        </Box> */}
         {/* <Box
           display={"flex"}
           justifyContent="center"
@@ -612,8 +627,12 @@ function VoiceCover({}: Props) {
             </Stack>
           ))}
         </Box> */}
-        <Box>
-          <Accordion>
+        <VoiceModelSelection
+          voiceModelProps={voiceModelProps}
+          setVoiceModelProps={setVoiceModelProps}
+          userId={userId}
+        />
+        {/* <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography>Add Custom Models</Typography>
             </AccordionSummary>
@@ -649,8 +668,7 @@ function VoiceCover({}: Props) {
                 />
               </Box>
             </AccordionDetails>
-          </Accordion>
-        </Box>
+          </Accordion> */}
         <Box
           // mt={10}
           width="100%"
@@ -783,10 +801,15 @@ function VoiceCover({}: Props) {
                   <PauseRounded />
                 </Button>
                 <IconButton
-                  onClick={() => {
+                  onClick={async () => {
+                    let _url = hashedAudioUrl;
+                    if (!_url) {
+                      const blob = await hashAndDownload();
+                      if (blob) _url = URL.createObjectURL(blob);
+                    }
                     const a = document.createElement("a");
-                    a.href = hashedAudioUrl ?? localCoverUrl;
-                    a.download = `${selectedArtist}_nusic_cover.mp3`; //TODO: get youtube song name
+                    a.href = _url ?? localCoverUrl;
+                    a.download = `${voiceModelProps.name}_nusic_cover.mp3`; //TODO: get youtube song name
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
