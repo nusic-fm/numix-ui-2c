@@ -458,7 +458,7 @@ function VoiceCover({}: Props) {
             modelSizeFormData
           );
           const size = modelSizeRes.data.size;
-          await createVoiceModelDoc(voiceModelProps.name, {
+          await createVoiceModelDoc(voiceModelProps.name, userId, {
             size,
             model_url: voiceModelProps.url,
             model_name: voiceModelProps.name,
@@ -547,6 +547,16 @@ function VoiceCover({}: Props) {
       checkUserAccessToken();
     }
   }, [enteredAccessToken]);
+
+  useEffect(() => {
+    if (hfStatus === "BUILDING") {
+      const intr = setInterval(() => {
+        console.log("running interval");
+        checkSpace();
+      }, 7000);
+      return () => clearInterval(intr);
+    }
+  }, [hfStatus]);
 
   return (
     <Box px={{ xs: "5%", md: "10%", lg: "13%" }}>

@@ -15,9 +15,10 @@ const createFirestoreId = (userString: string) => {
 
 const createVoiceModelDoc = async (
   id: string,
+  userId: string,
   voiceModelObj: any
 ): Promise<void> => {
-  const d = doc(db, DB_NAME, createFirestoreId(id));
+  const d = doc(db, DB_NAME, createFirestoreId(id) + "_" + userId);
   await setDoc(d, voiceModelObj);
 };
 export { createVoiceModelDoc };
