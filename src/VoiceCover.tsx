@@ -418,6 +418,7 @@ function VoiceCover({}: Props) {
                 content_id: inputSongUrl,
                 model_url: _modelObj.url,
               });
+              setIsGenerating(false);
             }
           }
         });
@@ -431,9 +432,10 @@ function VoiceCover({}: Props) {
             const msg = event.message;
             setProgressMsgs((m) => [...m, { msg, alert: "error" }]);
             setErrorSnackbarMessage("Error Occurred, try again later");
+            setIsGenerating(false);
           } else if (event.stage === "pending") {
             const _progressData = event?.progress_data?.at(0);
-            setGenerationProgress((_progressData?.progress ?? 0) * 100);
+            setGenerationProgress((_progressData?.progress || 0.05) * 100);
             if (_progressData?.desc) {
               const msg = _progressData.desc;
               setProgressMsgs((m) => [...m, { msg, alert: "success" }]);
@@ -483,9 +485,8 @@ function VoiceCover({}: Props) {
         //   );
         //   setTxHash(res.data.txHash);
         // } catch (e) {}
-      } catch (e) {
-      } finally {
-        setIsGenerating(false);
+      } catch (e: any) {
+        console.log(e.message);
       }
     }
 
@@ -841,7 +842,7 @@ function VoiceCover({}: Props) {
                       if (blob) _url = URL.createObjectURL(blob);
                     }
                     const a = document.createElement("a");
-                    a.href = _url ?? localCoverUrl;
+                    a.href = _url ? _url : localCoverUrl;
                     a.download = `${voiceModelProps.name}_nusic_cover.mp3`; //TODO: get youtube song name
                     document.body.appendChild(a);
                     a.click();
