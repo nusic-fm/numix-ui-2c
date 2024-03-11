@@ -393,7 +393,7 @@ function VoiceCover({}: Props) {
           0.2,
           0.8,
           0.7,
-          "wav",
+          "mp3",
         ];
         // const genResult = await app.predict(6, generateData);
         //nusic-nusic-voicecovergen.hf.space/file=/tmp/gradio/7a16847668b16521ddd40585cab98614ad86bbd8/Short%20Song%20English%20Song%20W%20Lyrics%2030%20seconds%20Test%20Ver.mp3
@@ -458,7 +458,7 @@ function VoiceCover({}: Props) {
             modelSizeFormData
           );
           const size = modelSizeRes.data.size;
-          await createVoiceModelDoc({
+          await createVoiceModelDoc(voiceModelProps.name, {
             size,
             model_url: voiceModelProps.url,
             model_name: voiceModelProps.name,
@@ -851,14 +851,17 @@ function VoiceCover({}: Props) {
               </Box>
               <Box display={"flex"} gap={0.5}>
                 <Typography variant="caption">
-                  Create an Access Token
+                  Create an Access Token with Role as
+                </Typography>
+                <Typography variant="caption" fontWeight={900}>
+                  "Write"
                 </Typography>
                 <Typography
                   variant="caption"
                   component={"a"}
                   fontStyle="italic"
                   sx={{ textDecoration: "underline" }}
-                  href="https://huggingface.co/settings/tokens"
+                  href="https://huggingface.co/settings/tokens?new_token=true"
                   target={"_blank"}
                 >
                   here
