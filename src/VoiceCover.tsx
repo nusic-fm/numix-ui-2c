@@ -133,7 +133,9 @@ function VoiceCover({}: Props) {
   const [eta, setEta] = useState(0);
   const [queueData, setQueueData] = useState("");
 
-  const [progressMsgs, setProgressMsgs] = useState<string[]>([]);
+  const [progressMsgs, setProgressMsgs] = useState<
+    { msg: string; alert: "success" | "error" }[]
+  >([]);
   const [generationProgress, setGenerationProgress] = useState(0);
   const [showAt, setShowAt] = useState(false);
   const [hfStatus, setHfStatus] = useState<string>();
@@ -425,15 +427,17 @@ function VoiceCover({}: Props) {
           // queue = true
           // size = 1
           console.log("status: ", event);
-          if (event.stage === "error") {
+          if (event.stage === "error" && event.message) {
+            const msg = event.message;
+            setProgressMsgs((m) => [...m, { msg, alert: "error" }]);
             setErrorSnackbarMessage("Error Occurred, try again later");
-          }
-          if (event.stage === "pending") {
+          } else if (event.stage === "pending") {
             const _progressData = event?.progress_data?.at(0);
             setGenerationProgress((_progressData?.progress ?? 0) * 100);
-            setProgressMsgs((msg) =>
-              [...msg, _progressData?.desc ?? ""].filter((msg) => msg.length)
-            );
+            if (_progressData?.desc) {
+              const msg = _progressData.desc;
+              setProgressMsgs((m) => [...m, { msg, alert: "success" }]);
+            }
           }
           if (event.size) {
             setQueueData(`${(event.position ?? 0) + 1}/${event.size}`);
@@ -553,10 +557,21 @@ function VoiceCover({}: Props) {
       const intr = setInterval(() => {
         console.log("running interval");
         checkSpace();
-      }, 7000);
+      }, 15000);
       return () => clearInterval(intr);
     }
   }, [hfStatus]);
+
+  useEffect(() => {
+    if (queueData) {
+      const [pos, size] = queueData.split("/");
+      if (parseInt(size) > 1) {
+        setErrorSnackbarMessage(
+          "Multiple requests are being processed, progress will be slow. Pause and Start the space again to dicard the process"
+        );
+      }
+    }
+  }, [queueData]);
 
   return (
     <Box px={{ xs: "5%", md: "10%", lg: "13%" }}>
@@ -755,8 +770,10 @@ function VoiceCover({}: Props) {
           >
             Generate
           </LoadingButton>
-          {isGenerating && (
-            <Typography variant="caption">{queueData}</Typography>
+          {queueData !== "1/1" && !!queueData && (
+            <Typography variant="caption" color={"red"}>
+              {queueData}
+            </Typography>
           )}
         </Box>
         {/* {!!eta && (
@@ -765,11 +782,17 @@ function VoiceCover({}: Props) {
           </Box>
         )} */}
         <Stack alignItems={"center"} gap={1}>
-          {progressMsgs.map((msg) => (
+          {progressMsgs.map(({ msg, alert }) => (
             <Alert
               key={msg}
-              icon={<CheckIcon fontSize="inherit" />}
-              severity="success"
+              icon={
+                alert === "success" ? (
+                  <CheckIcon fontSize="inherit" />
+                ) : (
+                  <CloseIcon fontSize="inherit" />
+                )
+              }
+              severity={alert}
             >
               {msg}
             </Alert>
