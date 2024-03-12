@@ -393,6 +393,8 @@ function VoiceCover({}: Props) {
               "Unable to download the Model Url, kindly provide a downloadable .zip url",
             userId,
             userName,
+            modelUrl: _modelObj.url,
+            modelName: _modelObj.name,
           });
           return;
         }
@@ -460,6 +462,9 @@ function VoiceCover({}: Props) {
                 "Unable to download the Model Url, kindly provide a downloadable .zip url",
               userId,
               userName,
+              youtubeLink,
+              model_url: _modelObj.url,
+              model_name: _modelObj.name,
             });
             if (msg.includes("mdxnet_models")) {
               const formData = new FormData();
@@ -770,6 +775,7 @@ function VoiceCover({}: Props) {
             alignItems={"center"}
           >
             <TextField
+              id="youtubelink"
               fullWidth
               sx={{
                 ".MuiInputBase-root": {

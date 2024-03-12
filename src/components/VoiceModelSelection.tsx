@@ -31,6 +31,7 @@ const VoiceModelSelection = ({
         position="relative"
       >
         <TextField
+          id="modelurl"
           fullWidth
           label="Model Url"
           value={voiceModelProps.url}
@@ -41,10 +42,11 @@ const VoiceModelSelection = ({
             });
           }}
           size="small"
-          helperText="HugginFace/Pixeldrain"
+          helperText="HugginFace/Pixeldrain urls"
           disabled={chipSelected}
         />
         <TextField
+          id="modelname"
           label="Model Name"
           // sx={{ width: 500 }}
           value={voiceModelProps.name}
