@@ -67,7 +67,7 @@ const VoiceModelSelection = ({
         alignItems="center"
       >
         <Typography variant="caption">Quick Selection:</Typography>
-        {list ? (
+        {list && list.length > 0 ? (
           list.map((obj) => (
             <Chip
               label={obj.model_name}

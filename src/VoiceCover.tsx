@@ -1,7 +1,7 @@
 import {
   TextField,
   Button,
-  CircularProgress,
+  // CircularProgress,
   Stack,
   IconButton,
   Typography,
@@ -12,9 +12,9 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
+  // Accordion,
+  // AccordionDetails,
+  // AccordionSummary,
   Snackbar,
   Chip,
   FormControlLabel,
@@ -33,7 +33,7 @@ import { useEffect, useRef, useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import SettingsRounded from "@mui/icons-material/SettingsRounded";
 import axios from "axios";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+// import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { client, duplicate } from "@gradio/client";
 import RemoveRedEyeRoundedIcon from "@mui/icons-material/RemoveRedEyeRounded";
 import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
@@ -503,23 +503,34 @@ function VoiceCover({}: Props) {
         });
         // Save Voice Models
         try {
-          const modelSizeFormData = new FormData();
-          modelSizeFormData.append("url", voiceModelProps.url);
-          const modelSizeRes = await axios.post(
-            `${import.meta.env.VITE_AUDIO_ANALYSER_PY}/model-size`,
-            modelSizeFormData
-          );
-          const size = modelSizeRes.data.size;
           await createVoiceModelDoc(voiceModelProps.name, userId, {
-            size,
+            // size,
             model_url: voiceModelProps.url,
             model_name: voiceModelProps.name,
             user_id: userId,
             userName,
           });
         } catch (e) {
-          setErrorSnackbarMessage("Error with the model download url");
+          console.error(e);
         }
+        // try {
+        //   const modelSizeFormData = new FormData();
+        //   modelSizeFormData.append("url", voiceModelProps.url);
+        //   const modelSizeRes = await axios.post(
+        //     `${import.meta.env.VITE_AUDIO_ANALYSER_PY}/model-size`,
+        //     modelSizeFormData
+        //   );
+        //   const size = modelSizeRes.data.size;
+        //   await createVoiceModelDoc(voiceModelProps.name, userId, {
+        //     size,
+        //     model_url: voiceModelProps.url,
+        //     model_name: voiceModelProps.name,
+        //     user_id: userId,
+        //     userName,
+        //   });
+        // } catch (e) {
+        //   // setErrorSnackbarMessage("Error with the model download url");
+        // }
         // TODO: Blockchain hash
         // try {
         //   const res = await axios.post(
