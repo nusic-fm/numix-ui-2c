@@ -50,6 +50,7 @@ import { logFirebaseEvent } from "./services/firebase.service";
 // import VoiceModelsAutoComplete from "./components/VoiceModelsAutoComplete";
 import VoiceModelSelection from "./components/VoiceModelSelection";
 import { createVoiceModelDoc } from "./services/db/voiceModels.service";
+import { createErrorDoc } from "./services/db/errors.service";
 
 type Props = {};
 
@@ -108,6 +109,7 @@ function VoiceCover({}: Props) {
     return idx === 0 ? GPU_SPACE_ID : CPU_SPACE_ID;
   });
   const [voiceModelChoices, setVoiceModelChoices] = useState<string[][]>();
+  const [generateAfterRestart, setGenerateAfterRestart] = useState(false);
 
   const [uploadedFile, setUploadedFile] = useState<File>();
 
@@ -317,6 +319,13 @@ function VoiceCover({}: Props) {
       }
     }
   };
+  const resetState = () => {
+    // Reset State:
+    setCoverUrl("");
+    setProgressMsgs([]);
+    setHashedAudioUrl("");
+    setGenerationProgress(0);
+  };
 
   const onGenerateVoiceCover = async () => {
     if (hfToken) {
@@ -334,10 +343,7 @@ function VoiceCover({}: Props) {
         setErrorSnackbarMessage("Enter a Youtube link");
         return;
       }
-      // Reset State:
-      setCoverUrl("");
-      setProgressMsgs([]);
-      setHashedAudioUrl("");
+      resetState();
 
       setIsGenerating(true);
       const _modelObj = { ...voiceModelProps };
@@ -370,8 +376,25 @@ function VoiceCover({}: Props) {
             _modelObj.name, //"diobrando",
           ]);
           setSnackbarMessage((result as any).data[0]);
-        } catch (e) {
-          console.log(e);
+        } catch (e: any) {
+          console.error(e);
+          setIsGenerating(false);
+          setProgressMsgs((m) => [
+            ...m,
+            {
+              msg: "Unable to download the Model Url, kindly provide a downloadable .zip url",
+              alert: "error",
+            },
+          ]);
+          createErrorDoc({
+            type: "upload_voice_model",
+            message: e.message || "",
+            customMessage:
+              "Unable to download the Model Url, kindly provide a downloadable .zip url",
+            userId,
+            userName,
+          });
+          return;
         }
       }
       try {
@@ -423,16 +446,46 @@ function VoiceCover({}: Props) {
           }
         });
         submitData.on("status", async (event) => {
-          // eta = 74.32423
-          // position = 0
-          // queue = true
-          // size = 1
+          // eta = 74.32423, position = 0, queue = true, size = 1
           console.log("status: ", event);
           if (event.stage === "error" && event.message) {
             const msg = event.message;
             setProgressMsgs((m) => [...m, { msg, alert: "error" }]);
-            setErrorSnackbarMessage("Error Occurred, try again later");
-            setIsGenerating(false);
+            // setErrorSnackbarMessage("Error Occurred, try again later");
+            // setIsGenerating(false);
+            createErrorDoc({
+              type: "generation",
+              message: msg || "",
+              customMessage:
+                "Unable to download the Model Url, kindly provide a downloadable .zip url",
+              userId,
+              userName,
+            });
+            if (msg.includes("mdxnet_models")) {
+              const formData = new FormData();
+              formData.append("delete_space_id", getSpaceId(userName, spaceId));
+              formData.append("space_id", `nusic/${spaceId}`);
+              formData.append("hf_token", hfToken);
+              await axios.post(
+                `${
+                  import.meta.env.VITE_AUDIO_ANALYSER_PY
+                }/delete-duplicate-space`,
+                formData
+              );
+              resetState();
+              setGenerateAfterRestart(true);
+              await checkSpace();
+            } else if (
+              msg.toLowerCase().includes("invalid") ||
+              msg.toLowerCase().includes("does not")
+            ) {
+              setProgressMsgs((m) => [...m, { msg, alert: "error" }]);
+              setIsGenerating(false);
+              return;
+            } else {
+              setProgressMsgs((m) => [...m, { msg, alert: "error" }]);
+              onGenerateVoiceCover();
+            }
           } else if (event.stage === "pending") {
             const _progressData = event?.progress_data?.at(0);
             setGenerationProgress((_progressData?.progress || 0.05) * 100);
@@ -446,14 +499,7 @@ function VoiceCover({}: Props) {
           }
           if (event.stage === "pending" && event.eta) {
             setEta(event.eta);
-
-            // {
-            //     eta: event.eta,
-            //     position: event.position,
-            //     size: event.size,
-            //   }
           }
-          //|| event.stage === "complete"
         });
         // Save Voice Models
         try {
@@ -469,6 +515,7 @@ function VoiceCover({}: Props) {
             model_url: voiceModelProps.url,
             model_name: voiceModelProps.name,
             user_id: userId,
+            userName,
           });
         } catch (e) {
           setErrorSnackbarMessage("Error with the model download url");
@@ -560,6 +607,9 @@ function VoiceCover({}: Props) {
         checkSpace();
       }, 15000);
       return () => clearInterval(intr);
+    } else if (hfStatus === "RUNNING" && generateAfterRestart) {
+      setGenerateAfterRestart(false);
+      onGenerateVoiceCover();
     }
   }, [hfStatus]);
 
@@ -771,6 +821,25 @@ function VoiceCover({}: Props) {
           >
             Generate
           </LoadingButton>
+          {/* <Button
+            onClick={async () => {
+              const formData = new FormData();
+              formData.append("delete_space_id", getSpaceId(userName, spaceId));
+              formData.append("space_id", `nusic/${spaceId}`);
+              formData.append("hf_token", hfToken);
+              await axios.post(
+                `${
+                  import.meta.env.VITE_AUDIO_ANALYSER_PY
+                }/delete-duplicate-space`,
+                formData
+              );
+              resetState();
+              setGenerateAfterRestart(true);
+              await checkSpace();
+            }}
+          >
+            Test
+          </Button> */}
           {queueData !== "1/1" && !!queueData && (
             <Typography variant="caption" color={"red"}>
               {queueData}

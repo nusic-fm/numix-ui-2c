@@ -15,3 +15,9 @@ export const getYouTubeVideoId = (url: string) => {
     return null;
   }
 };
+// const isLink = (text: string) => {
+//     // Regular expression pattern to match URLs
+//     var urlPattern = /^(ftp|http|https):\/\/[^ "]+$/;
+
+//     return urlPattern.test(text);
+// }
