@@ -434,15 +434,14 @@ function VoiceCover({}: Props) {
           setProgressMsgs((m) => [
             ...m,
             {
-              msg: "Unable to download the Model Url, kindly provide a downloadable .zip url",
+              msg: `${e.message} - Check the provided Model url or Uploaded zip`,
               alert: "error",
             },
           ]);
           createErrorDoc({
             type: "upload_voice_model",
             message: e.message || "",
-            customMessage:
-              "Unable to download the Model Url, kindly provide a downloadable .zip url",
+            customMessage: "Check the provided Model url or zip",
             userId,
             userName,
             modelUrl: _modelObj.url,
