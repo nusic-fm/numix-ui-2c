@@ -132,7 +132,16 @@ function VoiceCover({}: Props) {
     // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/arr.wav?alt=media&token=141f6e3c-3ef7-48ec-bd37-3df48783570b"
   );
   const [localCoverUrl, setLocalCoverUrl] = useState("");
-  const [voiceModelProps, setVoiceModelProps] = useState({ url: "", name: "" });
+  const [voiceModelProps, setVoiceModelProps] = useState<{
+    url: string;
+    name: string;
+    uploadFileUrl: string;
+  }>({
+    url: "",
+    name: "",
+    uploadFileUrl: "",
+  });
+  const [uploadedZipFile, setUploadedZipFile] = useState<File>();
   const [eta, setEta] = useState(0);
   const [queueData, setQueueData] = useState("");
 
@@ -298,6 +307,32 @@ function VoiceCover({}: Props) {
     }
   };
 
+  const onDropZipFile = async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length && !isGenerating) {
+      setIsGenerating(true);
+      const zip = acceptedFiles[0];
+      const url = `https://${userName}-${spaceId}.hf.space/upload`;
+      const formData = new FormData();
+      formData.append("files", zip);
+      try {
+        const res = await axios.post(url, formData, {
+          headers: { Authorization: `Bearer ${hfToken}` },
+        });
+        const filePath = res.data[0];
+        setVoiceModelProps({
+          name: voiceModelProps.name || acceptedFiles[0].name.split(".")[0],
+          uploadFileUrl: filePath,
+          url: "",
+        });
+        setUploadedZipFile(zip);
+      } catch (e) {
+        setErrorSnackbarMessage("Error uploading the file, try again later");
+      } finally {
+        setIsGenerating(false);
+      }
+    }
+  };
+
   const onDropMusicUpload = async (acceptedFiles: File[]) => {
     if (acceptedFiles.length && !isGenerating) {
       setIsGenerating(true);
@@ -336,7 +371,12 @@ function VoiceCover({}: Props) {
         return;
       }
       // if (!selectedArtist && !(voiceModelProps.url && voiceModelProps.name)) {
-      if (!(voiceModelProps.url && voiceModelProps.name)) {
+      if (
+        !(
+          (voiceModelProps.url || voiceModelProps.uploadFileUrl) &&
+          voiceModelProps.name
+        )
+      ) {
         setErrorSnackbarMessage("provide a voice model url and name");
         return;
       }
@@ -362,7 +402,6 @@ function VoiceCover({}: Props) {
         content_id: voiceModelProps.name,
         model_url: voiceModelProps.url,
       });
-      //TODO
       const app = await client(getSpaceId(userName, spaceId), {
         hf_token: hfToken as `hf_${string}`,
       });
@@ -372,8 +411,18 @@ function VoiceCover({}: Props) {
       );
       if (choiceIdx === -1) {
         try {
-          const result = await app.predict(8, [
-            _modelObj.url, //"https://huggingface.co/nolanaatama/jjsbd10krvcstpsncgm/resolve/main/diobrando.zip",
+          const methodFnIdx = _modelObj.uploadFileUrl ? 15 : 8;
+          const _urlData = _modelObj.uploadFileUrl
+            ? {
+                data: `https://${userName}-${spaceId}.hf.space/file=${_modelObj.uploadFileUrl}`,
+                name: _modelObj.uploadFileUrl,
+                size: uploadedZipFile?.size,
+                orig_name: uploadedZipFile?.name,
+                is_file: true,
+              }
+            : _modelObj.url;
+          const result = await app.predict(methodFnIdx, [
+            _urlData, //"https://huggingface.co/nolanaatama/jjsbd10krvcstpsncgm/resolve/main/diobrando.zip",
             _modelObj.name, //"diobrando",
           ]);
           setSnackbarMessage((result as any).data[0]);
@@ -511,7 +560,9 @@ function VoiceCover({}: Props) {
         try {
           await createVoiceModelDoc(voiceModelProps.name, userId, {
             // size,
-            model_url: voiceModelProps.url,
+            model_url:
+              voiceModelProps.url ||
+              `https://${userName}-${spaceId}.hf.space/file=${_modelObj.uploadFileUrl}`,
             model_name: voiceModelProps.name,
             user_id: userId,
             userName,
@@ -744,6 +795,7 @@ function VoiceCover({}: Props) {
           voiceModelProps={voiceModelProps}
           setVoiceModelProps={setVoiceModelProps}
           userId={userId}
+          onDropZipFile={onDropZipFile}
         />
         {/* <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -813,11 +865,11 @@ function VoiceCover({}: Props) {
               color="secondary"
               value={youtubeLink}
               onChange={(e) => {
-                if (!isGenerating) {
-                  setYoutubeLink(e.target.value);
-                  setInputSongUrl(e.target.value);
-                  setUploadedFile(undefined);
-                }
+                // if (!isGenerating) {
+                setYoutubeLink(e.target.value);
+                setInputSongUrl(e.target.value);
+                setUploadedFile(undefined);
+                // }
               }}
             />
           </Box>

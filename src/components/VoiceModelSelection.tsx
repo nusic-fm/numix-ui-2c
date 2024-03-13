@@ -1,20 +1,52 @@
-import { Box, Chip, Stack, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Chip,
+  IconButton,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { collection, query, where } from "firebase/firestore";
 import { useState } from "react";
 import { useCollectionDataOnce } from "react-firebase-hooks/firestore";
 import { db } from "../services/firebase.service";
+import FileUploadRoundedIcon from "@mui/icons-material/FileUploadRounded";
+import { useDropzone } from "react-dropzone";
 
 type Props = {
-  voiceModelProps: any;
-  setVoiceModelProps: any;
+  voiceModelProps: {
+    url: string;
+    name: string;
+    uploadFileUrl: string;
+  };
+  setVoiceModelProps: React.Dispatch<
+    React.SetStateAction<{
+      url: string;
+      name: string;
+      uploadFileUrl: string;
+    }>
+  >;
   userId: string;
+  onDropZipFile: (acceptedFiles: File[]) => Promise<void>;
 };
 
 const VoiceModelSelection = ({
   voiceModelProps,
   setVoiceModelProps,
   userId,
+  onDropZipFile,
 }: Props) => {
+  const { getRootProps, getInputProps } = useDropzone({
+    onDrop: (acceptedFiles, rejectedFiles, e) => {
+      if (acceptedFiles.length) {
+        onDropZipFile(acceptedFiles);
+        setChipSelected(false);
+      }
+    },
+    maxFiles: 1,
+    multiple: false,
+    accept: { "application/zip": [".zip"] },
+  });
   const modelsRef = collection(db, "voice_models");
   const [list] = useCollectionDataOnce(
     query(modelsRef, where("user_id", "==", userId))
@@ -40,17 +72,33 @@ const VoiceModelSelection = ({
         <TextField
           id="modelurl"
           fullWidth
-          label="Model Url"
-          value={voiceModelProps.url}
+          label="Model url or Upload zip"
+          value={voiceModelProps.url || voiceModelProps.uploadFileUrl}
           onChange={(e) => {
             setVoiceModelProps({
               ...voiceModelProps,
               url: e.target.value,
+              uploadFileUrl: "",
             });
           }}
           size="small"
           placeholder="HuggingFace/Pixeldrain urls"
-          disabled={chipSelected}
+          disabled={chipSelected || !!voiceModelProps.uploadFileUrl}
+          InputProps={{
+            endAdornment: (
+              <IconButton
+                {...getRootProps({ className: "dropzone" })}
+                size="small"
+                sx={{
+                  borderRadius: "4px",
+                  width: 42,
+                  height: 36,
+                }}
+              >
+                <FileUploadRoundedIcon color="secondary" fontSize="small" />
+              </IconButton>
+            ),
+          }}
         />
         <TextField
           id="modelname"
@@ -87,13 +135,14 @@ const VoiceModelSelection = ({
               }
               onClick={() => {
                 if (obj.model_url === voiceModelProps.url) {
-                  setVoiceModelProps({ url: "", name: "" });
+                  setVoiceModelProps({ url: "", name: "", uploadFileUrl: "" });
                   setChipSelected(false);
                 } else {
                   setChipSelected(true);
                   setVoiceModelProps({
                     url: obj.model_url,
                     name: obj.model_name,
+                    uploadFileUrl: "",
                   });
                 }
               }}

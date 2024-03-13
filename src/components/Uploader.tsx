@@ -69,7 +69,7 @@ const Uploader = ({ onDrop, initializeTone, melodyFile, vid }: Props) => {
               borderRadius: "4px",
               width: 42,
               height: 36,
-              background: "rgba(255,255,255,0.05)",
+              // background: "rgba(255,255,255,0.05)",
               // background:
               //   "linear-gradient(90deg, rgba(84,50,255,1) 0%, rgba(237,50,255,1) 100%)",
               // outline: "1px solid rgba(0,0,0,0.4)",
