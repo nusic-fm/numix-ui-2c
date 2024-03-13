@@ -558,18 +558,20 @@ function VoiceCover({}: Props) {
           }
         });
         // Save Voice Models
-        try {
-          await createVoiceModelDoc(voiceModelProps.name, userId, {
-            // size,
-            model_url: voiceModelProps.url,
-            // ||
-            // `https://${userName}-${spaceId}.hf.space/file=${_modelObj.uploadFileUrl}`,
-            model_name: voiceModelProps.name,
-            user_id: userId,
-            userName,
-          });
-        } catch (e) {
-          console.error(e);
+        if (voiceModelProps.url) {
+          try {
+            await createVoiceModelDoc(voiceModelProps.name, userId, {
+              // size,
+              model_url: voiceModelProps.url,
+              // ||
+              // `https://${userName}-${spaceId}.hf.space/file=${_modelObj.uploadFileUrl}`,
+              model_name: voiceModelProps.name,
+              user_id: userId,
+              userName,
+            });
+          } catch (e) {
+            console.error(e);
+          }
         }
         // try {
         //   const modelSizeFormData = new FormData();
