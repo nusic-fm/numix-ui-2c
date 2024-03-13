@@ -1,6 +1,7 @@
 import {
   Box,
   Chip,
+  CircularProgress,
   IconButton,
   Stack,
   TextField,
@@ -36,11 +37,14 @@ const VoiceModelSelection = ({
   userId,
   onDropZipFile,
 }: Props) => {
+  const [isLoading, setIsLoading] = useState(false);
   const { getRootProps, getInputProps } = useDropzone({
-    onDrop: (acceptedFiles, rejectedFiles, e) => {
+    onDrop: async (acceptedFiles, rejectedFiles, e) => {
       if (acceptedFiles.length) {
-        onDropZipFile(acceptedFiles);
         setChipSelected(false);
+        setIsLoading(true);
+        await onDropZipFile(acceptedFiles);
+        setIsLoading(false);
       }
     },
     maxFiles: 1,
@@ -83,10 +87,13 @@ const VoiceModelSelection = ({
           }}
           size="small"
           placeholder="HuggingFace/Pixeldrain urls"
-          disabled={chipSelected || !!voiceModelProps.uploadFileUrl}
+          disabled={
+            chipSelected || !!voiceModelProps.uploadFileUrl || isLoading
+          }
           InputProps={{
             endAdornment: (
               <IconButton
+                disabled={isLoading}
                 {...getRootProps({ className: "dropzone" })}
                 size="small"
                 sx={{
@@ -95,7 +102,11 @@ const VoiceModelSelection = ({
                   height: 36,
                 }}
               >
-                <FileUploadRoundedIcon color="secondary" fontSize="small" />
+                {isLoading ? (
+                  <CircularProgress size={"16px"} color="secondary" />
+                ) : (
+                  <FileUploadRoundedIcon color="secondary" fontSize="small" />
+                )}
               </IconButton>
             ),
           }}

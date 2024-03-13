@@ -315,6 +315,7 @@ function VoiceCover({}: Props) {
       const formData = new FormData();
       formData.append("files", zip);
       try {
+        setSnackbarMessage("Uploading the zip file");
         const res = await axios.post(url, formData, {
           headers: { Authorization: `Bearer ${hfToken}` },
         });
@@ -325,6 +326,7 @@ function VoiceCover({}: Props) {
           url: "",
         });
         setUploadedZipFile(zip);
+        setSnackbarMessage("Successfully Uploaded!");
       } catch (e) {
         setErrorSnackbarMessage("Error uploading the file, try again later");
       } finally {
