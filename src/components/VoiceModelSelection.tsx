@@ -42,7 +42,7 @@ const VoiceModelSelection = ({
             });
           }}
           size="small"
-          helperText="HugginFace/Pixeldrain urls"
+          helperText="HuggingFace/Pixeldrain urls"
           disabled={chipSelected}
         />
         <TextField

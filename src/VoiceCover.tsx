@@ -642,9 +642,12 @@ function VoiceCover({}: Props) {
 
   return (
     <Box px={{ xs: "5%", md: "10%", lg: "13%" }}>
-      <Box py={4} display="flex" justifyContent={"center"}>
-        <img src="/nusic_purple.png" width={160} alt="" />
-      </Box>
+      <Stack alignItems={"center"} pt={4} pb={6}>
+        <Box display="flex" justifyContent={"center"} mb={1}>
+          <img src="/nusic_purple.png" width={155} alt="" />
+        </Box>
+        <Typography variant="body2">Unlocking AI Music</Typography>
+      </Stack>
       <Stack gap={2}>
         {/* <Box display={"flex"} justifyContent="center" alignItems="center">
           <Box width={400} display="flex">
