@@ -51,6 +51,7 @@ import { logFirebaseEvent } from "./services/firebase.service";
 import VoiceModelSelection from "./components/VoiceModelSelection";
 import { createVoiceModelDoc } from "./services/db/voiceModels.service";
 import { createErrorDoc } from "./services/db/errors.service";
+import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 
 type Props = {};
 
@@ -642,11 +643,28 @@ function VoiceCover({}: Props) {
 
   return (
     <Box px={{ xs: "5%", md: "10%", lg: "13%" }}>
-      <Stack alignItems={"center"} pt={4} pb={6}>
-        <Box display="flex" justifyContent={"center"} mb={1}>
-          <img src="/nusic_purple.png" width={155} alt="" />
+      <Stack alignItems={"center"} pt={3} pb={6} gap={2}>
+        <Box>
+          <Box display="flex" justifyContent={"center"} mb={1}>
+            <img src="/nusic_purple.png" width={155} alt="" />
+          </Box>
+          <Typography variant="body2">Unlocking AI Music</Typography>
         </Box>
-        <Typography variant="body2">Unlocking AI Music</Typography>
+        <Chip
+          clickable
+          label={hfStatus || "LOADING"}
+          variant="outlined"
+          onDelete={() => setShowSettings(true)}
+          deleteIcon={<SettingsRounded />}
+          color={
+            hfStatus === "RUNNING"
+              ? "success"
+              : hfStatus === "BUILDING" || !hfStatus
+              ? "warning"
+              : "error"
+          }
+          onClick={() => setShowSettings(true)}
+        />
       </Stack>
       <Stack gap={2}>
         {/* <Box display={"flex"} justifyContent="center" alignItems="center">
@@ -771,6 +789,9 @@ function VoiceCover({}: Props) {
           justifyContent="center"
           flexWrap={"wrap"}
           gap={2}
+          // sx={{ bgcolor: "rgb(20, 20, 20)" }}
+          // p={5}
+          // borderRadius="16px"
         >
           <Box
             flexBasis={{ xs: "100%", md: "58%" }}
@@ -809,23 +830,11 @@ function VoiceCover({}: Props) {
               vid={""}
             />
           </Box>
-          <IconButton
-            onClick={() => setShowSettings(true)}
-            color={
-              hfStatus === "RUNNING"
-                ? "success"
-                : hfStatus === "BUILDING"
-                ? "warning"
-                : "error"
-            }
-          >
-            <SettingsRounded />
-          </IconButton>
         </Box>
         <Box
           display={"flex"}
           justifyContent="center"
-          my={2}
+          my={4}
           alignItems="center"
           gap={1}
         >
@@ -836,8 +845,10 @@ function VoiceCover({}: Props) {
               background:
                 "linear-gradient(90deg, rgba(84,50,255,1) 0%, rgba(237,50,255,1) 100%)",
               color: "white",
+              px: 2.5,
             }}
             size="large"
+            startIcon={<AutoAwesomeRoundedIcon />}
           >
             Generate
           </LoadingButton>
@@ -1003,7 +1014,7 @@ function VoiceCover({}: Props) {
           </Stack>
         </DialogContent>
       </Dialog>
-      <Dialog open={showSettings}>
+      <Dialog open={showSettings} onClose={() => setShowSettings(false)}>
         <DialogTitle>Settings</DialogTitle>
         <IconButton
           aria-label="close"

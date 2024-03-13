@@ -22,7 +22,14 @@ const VoiceModelSelection = ({
   const [chipSelected, setChipSelected] = useState(false);
 
   return (
-    <Stack mb={5} gap={2} mx={{ lg: 25 }}>
+    <Stack
+      mb={5}
+      gap={2}
+      mx={{ lg: 25 }}
+      // sx={{ bgcolor: "rgb(20, 20, 20)" }}
+      // p={5}
+      // borderRadius="16px"
+    >
       <Box
         display={"flex"}
         justifyContent="center"
@@ -42,7 +49,7 @@ const VoiceModelSelection = ({
             });
           }}
           size="small"
-          helperText="HuggingFace/Pixeldrain urls"
+          placeholder="HuggingFace/Pixeldrain urls"
           disabled={chipSelected}
         />
         <TextField
@@ -57,13 +64,12 @@ const VoiceModelSelection = ({
             });
           }}
           size="small"
-          helperText=" "
           disabled={chipSelected}
         />
       </Box>
       <Box
         display={"flex"}
-        gap={2}
+        gap={1}
         flexWrap="wrap"
         justifyContent={"start"}
         alignItems="center"
