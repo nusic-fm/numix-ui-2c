@@ -664,17 +664,17 @@ const AudioComponent = ({
                   vocalPhaseVocoderNodeRef.current.parameters.get(
                     "pitchFactor"
                   );
-                const instrPitchFactorParam =
-                  vocalPhaseVocoderNodeRef.current.parameters.get(
-                    "pitchFactor"
-                  );
+                // const instrPitchFactorParam =
+                //   vocalPhaseVocoderNodeRef.current.parameters.get(
+                //     "pitchFactor"
+                //   );
 
                 vocalPitchFactorParam.value = warpBypassed
                   ? 1.0
                   : (pitchFactor * 1) / speedFactor;
-                instrPitchFactorParam.value = warpBypassed
-                  ? 1.0
-                  : (pitchFactor * 1) / speedFactor;
+                // instrPitchFactorParam.value = warpBypassed
+                //   ? 1.0
+                //   : (pitchFactor * 1) / speedFactor;
               }}
             />
           </Stack>
