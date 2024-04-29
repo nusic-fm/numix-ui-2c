@@ -15,30 +15,33 @@ const Fx = () => {
   const [vid, setVid] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("");
   const [musicInfo, setMusicInfo] = useState<{ title: string; tag: string }>();
-  const [instrumentalUrl, setInstrumentalUrl] = useState("");
+  const [instrumentalUrl, setInstrumentalUrl] = useState(
+    `https://firebasestorage.googleapis.com/v0/b/nusic-vox-player.appspot.com/o/covers_v1%2FZa2lpP2IwsE9Hw46IyIe%2Finstrumental.mp3?alt=media`
+  );
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/instrumental.wav?alt=media"
-  const [vocalsUrl, setVocalsUrl] = useState("");
+  const [vocalsUrl, setVocalsUrl] = useState(
+    `https://firebasestorage.googleapis.com/v0/b/nusic-vox-player.appspot.com/o/covers_v1%2FZa2lpP2IwsE9Hw46IyIe%2Fkanye.mp3?alt=media`
+  );
   // "https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/vocals.wav?alt=media"
   // const [values] = useCollectionDataOnce(query(numixsRef));
-  const [snaps] = useCollectionOnce(query(numixsRef));
+  // const [snaps] = useCollectionOnce(query(numixsRef));
 
   const onWrapSelected = async (v: any) => {
     const _vid = v.vid;
     setVid(_vid);
     setMusicInfo({ title: v.title, tag: v.tag });
     setSelectedGenre(v.genre);
-
-    setInstrumentalUrl(
-      `https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/wrapper%2F${_vid}%2Finstr.wav?alt=media`
-    );
-    setVocalsUrl(
-      `https://firebasestorage.googleapis.com/v0/b/dev-numix.appspot.com/o/wrapper%2F${_vid}%2Fvocals.wav?alt=media`
-    );
+    // lorde;
+    const _instrUrl = `https://firebasestorage.googleapis.com/v0/b/nusic-vox-player.appspot.com/o/covers_v1%2FZa2lpP2IwsE9Hw46IyIe%2Finstrumental.mp3?alt=media`;
+    //   const firstVoice = (artistsObj as any)[songId].voices[0].id;
+    const _vocalsUrl = `https://firebasestorage.googleapis.com/v0/b/nusic-vox-player.appspot.com/o/covers_v1%2FZa2lpP2IwsE9Hw46IyIe%2Fkanye.mp3?alt=media`;
+    setInstrumentalUrl(_instrUrl);
+    setVocalsUrl(_vocalsUrl);
   };
 
   return (
     <Box>
-      <Box display={"flex"} gap={2} flexWrap="wrap">
+      {/* <Box display={"flex"} gap={2} flexWrap="wrap">
         {snaps?.docs?.map((d) => {
           const v = d.data();
           return (
@@ -61,7 +64,7 @@ const Fx = () => {
             />
           );
         })}
-      </Box>
+      </Box> */}
       {!!instrumentalUrl && !!vocalsUrl && (
         <AudioComponent
           onFinish={() => {}}

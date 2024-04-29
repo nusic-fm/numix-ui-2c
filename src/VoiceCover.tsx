@@ -52,6 +52,7 @@ import VoiceModelSelection from "./components/VoiceModelSelection";
 import { createVoiceModelDoc } from "./services/db/voiceModels.service";
 import { createErrorDoc } from "./services/db/errors.service";
 import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
+import { useNavigate } from "react-router-dom";
 
 type Props = {};
 
@@ -156,7 +157,7 @@ function VoiceCover({}: Props) {
 
   const containerRef = useRef(null);
   const wavesurfer = useWavesurfer(containerRef, localCoverUrl, true);
-
+  const navigate = useNavigate();
   const checkUserAccessToken = async () => {
     try {
       setSettingsLoading(true);
@@ -702,7 +703,13 @@ function VoiceCover({}: Props) {
           <Box display="flex" justifyContent={"center"} mb={1}>
             <img src="/nusic_purple.png" width={155} alt="" />
           </Box>
-          <Typography variant="body2">Unlocking AI Music</Typography>
+          <Typography
+            variant="body2"
+            onClick={() => navigate("/fx")}
+            component="a"
+          >
+            Unlocking AI Music
+          </Typography>
         </Box>
         <Chip
           clickable

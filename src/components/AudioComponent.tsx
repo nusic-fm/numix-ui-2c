@@ -88,7 +88,7 @@ const AudioComponent = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isInstrMuted, setIsInstrMuted] = useState(false);
   const [instrDurationInSec, setInstrDurationInSec] = useState<number>(0);
-  const [isSecondaryInstrReady, setIsSecondaryInstrReady] = useState(false);
+  const [isSecondaryInstrReady, setIsSecondaryInstrReady] = useState(true);
 
   const vocalPlayControlRef = useRef<any>(null);
   const vocalPhaseVocoderNodeRef = useRef<any>(null);
@@ -209,21 +209,19 @@ const AudioComponent = ({
 
   const initInstr = async () => {
     if (instrPlayControlRef.current) {
-      const instrBuffer = await loader.load(instrumentalUrl);
-      // Instrumental Setup
-      const [instrPlayerEngine, instrPhaseVocoderNode, instrGainNode] =
-        await setupEngine(instrBuffer);
-      const instrPlayControl = new wavesAudio.PlayControl(instrPlayerEngine);
-      instrPlayControl.setLoopBoundaries(0, instrBuffer.duration);
-      instrPlayControl.loop = true;
-
-      instrGainNode.connect(audioContext.destination);
-
-      instr2GainNodeRef.current = instrGainNode;
-      instr2PlayControlRef.current = instrPlayControl;
-      instr2PlayControlRef.current.speed = speedFactor;
-      instr2PhaseVocoderNodeRef.current = instrPhaseVocoderNode;
-      setIsSecondaryInstrReady(true);
+      // const instrBuffer = await loader.load(instrumentalUrl);
+      // // Instrumental Setup
+      // const [instrPlayerEngine, instrPhaseVocoderNode, instrGainNode] =
+      //   await setupEngine(instrBuffer);
+      // const instrPlayControl = new wavesAudio.PlayControl(instrPlayerEngine);
+      // instrPlayControl.setLoopBoundaries(0, instrBuffer.duration);
+      // instrPlayControl.loop = true;
+      // instrGainNode.connect(audioContext.destination);
+      // instr2GainNodeRef.current = instrGainNode;
+      // instr2PlayControlRef.current = instrPlayControl;
+      // instr2PlayControlRef.current.speed = speedFactor;
+      // instr2PhaseVocoderNodeRef.current = instrPhaseVocoderNode;
+      // setIsSecondaryInstrReady(true);
     } else {
       const instrBuffer = await loader.load(instrumentalUrl);
       // Instrumental Setup
@@ -246,11 +244,11 @@ const AudioComponent = ({
     }
   };
 
-  useEffect(() => {
-    if (instrumentalUrl) {
-      initInstr();
-    }
-  }, [instrumentalUrl]);
+  // useEffect(() => {
+  //   if (instrumentalUrl) {
+  //     initInstr();
+  //   }
+  // }, [instrumentalUrl]);
 
   useEffect(() => {
     const init = async () => {
@@ -289,6 +287,7 @@ const AudioComponent = ({
       delayGainNodeRef.current = delayGainNode;
       reverbGainNodeRef.current = reverbGainNode;
       flangerGainNodeRef.current = flangerGainNode;
+      await initInstr();
       // instrGainNodeRef.current.gain.value = 1.0;
       //   setupInstrBypassButton(instrGainNode);
       //   setupWarpBypassButton(
@@ -422,31 +421,7 @@ const AudioComponent = ({
             </Fab>
           </Box>
           {instrumentalUrl ? (
-            <Box display={"flex"} width="100%" height={"100%"}>
-              <Box
-                sx={{ bgcolor: "rgba(0,0,0,0.7)" }}
-                height="60px"
-                width={"40%"}
-                display="flex"
-                alignItems={"center"}
-                justifyContent="center"
-                borderRadius={2}
-              >
-                <LockRoundedIcon />
-              </Box>
-              <div ref={containerRef} style={{ width: "20%" }}></div>
-              <Box
-                sx={{ bgcolor: "rgba(0,0,0,0.7)" }}
-                height="60px"
-                width={100}
-                display="flex"
-                alignItems={"center"}
-                justifyContent="center"
-                borderRadius={2}
-              >
-                <LockRoundedIcon />
-              </Box>
-            </Box>
+            <div ref={containerRef}></div>
           ) : (
             <Skeleton
               width={"60%"}
@@ -477,9 +452,43 @@ const AudioComponent = ({
               <LockRoundedIcon />
             </Box>
           </Box> */}
-          <Typography variant="caption">
+          <Box display={"flex"} gap={1}>
+            <Button
+              color="secondary"
+              variant="outlined"
+              onClick={() => {
+                const pos = instrPlayControlRef.current.currentPosition;
+                instrPlayControlRef.current.seek(pos - 10);
+                vocalPlayControlRef.current.seek(pos - 10);
+              }}
+            >
+              - 10s
+            </Button>
+            <Button
+              onClick={() => {
+                instrPlayControlRef.current.seek(79);
+                vocalPlayControlRef.current.seek(79);
+              }}
+              color="secondary"
+              variant="contained"
+            >
+              Go to 1.19
+            </Button>
+            <Button
+              color="secondary"
+              variant="outlined"
+              onClick={() => {
+                const pos = instrPlayControlRef.current.currentPosition;
+                instrPlayControlRef.current.seek(pos + 10);
+                vocalPlayControlRef.current.seek(pos + 10);
+              }}
+            >
+              + 10s
+            </Button>
+          </Box>
+          {/* <Typography variant="caption">
             00:{instrDurationInSec.toFixed(0)}
-          </Typography>
+          </Typography> */}
           <IconButton
             sx={{ ml: "auto" }}
             onClick={() => {
@@ -516,6 +525,7 @@ const AudioComponent = ({
             justifyContent="space-between"
           >
             <IconButton
+              disabled
               onClick={() => {
                 setIsOriginalPlaying(!isOriginalPlaying);
               }}

@@ -11,7 +11,7 @@ import {
   // Route,
   // Link,
 } from "react-router-dom";
-// import Fx from "./Fx";
+import Fx from "./Fx";
 import VoiceCover from "./VoiceCover";
 
 const router = createHashRouter([
@@ -19,10 +19,10 @@ const router = createHashRouter([
   //   path: "/",
   //   element: <App />,
   // },
-  // {
-  //   path: "/fx",
-  //   element: <Fx />,
-  // },
+  {
+    path: "/fx",
+    element: <Fx />,
+  },
   {
     path: "/",
     element: <VoiceCover />,
